@@ -1,6 +1,0 @@
-package com.hebe.matris;
-
-public enum OpCode {
-
-	ALIVE
-}

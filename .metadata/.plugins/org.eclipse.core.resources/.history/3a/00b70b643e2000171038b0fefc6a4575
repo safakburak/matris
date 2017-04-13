@@ -1,7 +1,0 @@
-package com.hebe.matris;
-
-import java.nio.ByteBuffer;
-
-public class MsgAlive extends Message {
-
-}

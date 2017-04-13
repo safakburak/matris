@@ -1,6 +1,0 @@
-package com.hebe.matris;
-
-public class Message {
-
-	public static int size = 32;
-}

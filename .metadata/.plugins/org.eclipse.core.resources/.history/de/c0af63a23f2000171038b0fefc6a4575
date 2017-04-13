@@ -1,6 +1,0 @@
-package com.hebe.matris;
-
-@SuppressWarnings("serial")
-public class MsgAlive extends Message {
-
-}

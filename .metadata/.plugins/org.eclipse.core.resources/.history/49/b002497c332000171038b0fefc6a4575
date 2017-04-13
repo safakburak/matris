@@ -1,9 +1,0 @@
-package com.hebe.matris;
-
-public class MsgAlive extends Message {
-
-	public MsgAlive() {
-		
-		super(opCode)
-	}
-}

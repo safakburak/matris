@@ -1,5 +1,0 @@
-package com.hebe.matris;
-
-public class MsgAlive extends Message {
-
-}
