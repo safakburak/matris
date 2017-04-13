@@ -20,6 +20,7 @@ public class MasterMultiplier extends Coordinator {
 	}, "input checking thread");
 
 	private File inputDir;
+	private File outputDir;
 	private File completedDir;
 
 	private ConcurrentHashMap<Task, Boolean> tasks = new ConcurrentHashMap<>();
@@ -29,9 +30,11 @@ public class MasterMultiplier extends Coordinator {
 		super(port);
 
 		inputDir = new File("input");
+		outputDir = new File("output");
 		completedDir = new File("done");
 
 		inputDir.mkdirs();
+		outputDir.mkdirs();
 		completedDir.mkdirs();
 
 		inputCheckingThread.start();
@@ -45,7 +48,7 @@ public class MasterMultiplier extends Coordinator {
 
 				if (file.isFile() && tasks.contains(file) == false) {
 
-					Task task = new Task(file, new TaskListener() {
+					Task task = new Task(file, new TaskCallback() {
 
 						@Override
 						public void onComplete(Task task) {

@@ -4,16 +4,16 @@ import java.io.File;
 
 public class Task {
 
-	private TaskListener listener;
+	private TaskCallback callback;
 
 	private File file;
 
-	public Task(File file, TaskListener listener) {
+	public Task(File file, TaskCallback callback) {
 
 		this.file = file;
-		this.listener = listener;
+		this.callback = callback;
 
-		this.listener.onComplete(this);
+		this.callback.onComplete(this);
 	}
 
 	public File getFile() {

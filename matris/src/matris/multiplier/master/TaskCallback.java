@@ -1,6 +1,6 @@
 package matris.multiplier.master;
 
-public interface TaskListener {
+public interface TaskCallback {
 
 	void onComplete(Task task);
 }
