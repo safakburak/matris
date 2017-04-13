@@ -1,0 +1,6 @@
+package com.hebe.matris;
+
+public interface NodeListener {
+
+	void onMessage(Message message);
+}

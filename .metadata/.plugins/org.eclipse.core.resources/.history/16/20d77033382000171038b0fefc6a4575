@@ -1,0 +1,22 @@
+package com.hebe.matris;
+
+import java.net.DatagramPacket;
+import java.nio.ByteBuffer;
+
+public class MsgAlive extends Message {
+
+	public MsgAlive() {
+		
+		super(OpCode.ALIVE);
+	}
+
+	@Override
+	public void serialize(ByteBuffer buffer) {
+		
+	}
+
+	@Override
+	public void deserialize(ByteBuffer buffer) {
+		
+	}
+}

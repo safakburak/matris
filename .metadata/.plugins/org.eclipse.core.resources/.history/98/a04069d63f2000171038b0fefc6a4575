@@ -1,0 +1,9 @@
+package com.hebe.matris.messagesocket.test;
+
+public class TestMessage {
+
+	public TestMessage() {
+		
+		
+	}
+}

@@ -1,0 +1,52 @@
+package com.hebe.matris;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.nio.ByteBuffer;
+
+public abstract class Message implements Serializable {
+
+	//bytes
+	public static final int SIZE = 32;
+	
+	private OpCode opCode;
+	
+	public Message(OpCode opCode) {
+		
+		this.opCode = opCode;
+	}
+	
+	public OpCode getOpCode() {
+		
+		return opCode;
+	}
+	
+	public static byte[] toBytes (Message message) throws IOException {
+
+		ByteArrayOutputStream bos = new ByteArrayOutputStream(SIZE);
+		ObjectOutputStream out = new ObjectOutputStream(bos);
+		out.writeObject(message);
+		out.flush();
+		
+		return bos.toByteArray();
+	}
+	
+	public static Message fromBytes (byte[] buffer) {
+		
+		ByteArrayInputStream ios = new ByteArrayInputStream(buffer);
+		ObjectInputStream in = new ObjectInputStream(ios);
+		in.readObject();
+		
+		buffer.rewind();
+		int ordinal = buffer.getInt();
+		Message result = create(OpCode.values()[ordinal]);
+		
+		result.deserialize(buffer);
+		
+		return result;
+	}
+}

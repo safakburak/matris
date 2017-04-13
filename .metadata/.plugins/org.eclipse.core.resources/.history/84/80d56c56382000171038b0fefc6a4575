@@ -1,0 +1,8 @@
+package com.hebe.matris;
+
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+public class Node {
+
+	private ConcurrentLinkedQueue<Message> incomingMessages = new ConcurrentLinkedQueue<>();
+}

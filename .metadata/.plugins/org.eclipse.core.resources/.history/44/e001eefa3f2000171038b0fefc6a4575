@@ -1,0 +1,14 @@
+package com.hebe.matris.messagesocket.test;
+
+import java.net.SocketException;
+
+import com.hebe.matris.messagesocket.MessageSocket;
+
+public class MessageSocketTest {
+
+	public static void main(String[] args) throws SocketException {
+		
+		MessageSocket socket1 = new MessageSocket(1234);
+		
+	}
+}

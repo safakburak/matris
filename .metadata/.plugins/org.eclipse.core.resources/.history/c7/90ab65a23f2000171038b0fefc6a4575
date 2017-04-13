@@ -1,0 +1,6 @@
+package com.hebe.matris;
+
+public interface MessageSocketListener {
+
+	void onMessage(Message message);
+}

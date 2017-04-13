@@ -1,0 +1,66 @@
+package com.hebe.matris;
+
+import java.io.Serializable;
+import java.nio.ByteBuffer;
+
+public abstract class Message implements Serializable{
+
+	//bytes
+	public static final int SIZE = 32;
+	
+	private OpCode opCode;
+	
+	public Message(OpCode opCode) {
+		
+		this.opCode = opCode;
+	}
+	
+	public OpCode getOpCode() {
+		
+		return opCode;
+	}
+	
+	public static ByteBuffer toBytes (Message message) {
+		
+		ByteBuffer buffer = ByteBuffer.allocate(SIZE);
+		buffer.rewind();
+		buffer.putInt(message.getOpCode().ordinal());
+		
+		message.serialize(buffer);
+
+		return buffer;
+	}
+	
+	public static Message fromBytes (ByteBuffer buffer) {
+		
+		buffer.rewind();
+		int ordinal = buffer.getInt();
+		Message result = create(OpCode.values()[ordinal]);
+		
+		result.deserialize(buffer);
+		
+		return result;
+	}
+	
+	/*
+	 * Bizim projelerde normalde bu işi böyle yapmayız.
+	 * Performans ihtiyacı yüksek olduğunda code generator kullanıyoruz.
+	 * Geliştirme hızı ve esneklik ihtiyacımız olduğunda reflection'a yükleniyoruz.
+	 * 
+	 * Buradaki kullanım şu sebeple seçildi:
+	 * 		Genel bir protokole destek gerekmiyor.
+	 * 		Mesaj sayısı az. 
+	 */
+	private static Message create(OpCode opCode) {
+		
+		switch (opCode) {
+		case ALIVE:
+			
+			return new MsgAlive();
+
+		default:
+			
+			throw new AssertionError("Geçersiz OpCode");
+		}
+	}
+}

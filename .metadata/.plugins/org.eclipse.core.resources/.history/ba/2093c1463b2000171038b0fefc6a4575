@@ -1,0 +1,116 @@
+package com.hebe.matris;
+
+import java.net.DatagramPacket;
+import java.nio.ByteBuffer;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+public class Node {
+
+	private ConcurrentLinkedQueue<DatagramPacket> inbox = new ConcurrentLinkedQueue<>();
+
+	private ConcurrentLinkedQueue<DatagramPacket> outbox = new ConcurrentLinkedQueue<>();
+	
+	private ConcurrentHashMap<NodeListener, Boolean> listeners = new ConcurrentHashMap<>();
+
+	private Thread readingThread = new Thread(new Runnable() {
+
+		public void run() {
+
+			while (true) {
+
+				read();
+			}
+		}
+	});
+
+	private Thread writingThread = new Thread(new Runnable() {
+
+		public void run() {
+
+			while (true) {
+
+				write();
+			}
+		}
+	});
+
+	private Thread dispatchingThread = new Thread(new Runnable() {
+
+		public void run() {
+
+			while (true) {
+
+				dispatch();
+			}
+		}
+	});
+
+	public Node() {
+
+		readingThread.start();
+		writingThread.start();
+		dispatchingThread.start();
+	}
+
+	protected void read() {
+
+	}
+
+	protected void dispatch() {
+
+		if (inbox.isEmpty()) {
+
+			sleepSilent(100);
+
+		} else {
+
+			DatagramPacket packet = inbox.poll();
+
+			if (packet == null) {
+
+				return;
+			}
+
+			Message message = Message.fromBytes(ByteBuffer.wrap(packet.getData()));
+
+			for(NodeListener listener : listeners.keySet()) {
+				
+				listener.onMessage(message);
+			}
+		}
+	}
+
+	protected void write() {
+
+		if(outbox.isEmpty()) {
+			
+			sleepSilent(100);
+			
+		} else {
+
+			DatagramPacket packet = outbox.poll();
+			
+			if(packet != null) {
+				
+			}
+		}
+	}
+	
+	public void addListener(NodeListener listener) {
+		
+		listeners.putIfAbsent(listener, true);
+	}
+	
+	private void sleepSilent(long ms) {
+		
+		try {
+
+			Thread.sleep(100);
+
+		} catch (InterruptedException e) {
+
+			// nothing to do
+		}
+	}
+}

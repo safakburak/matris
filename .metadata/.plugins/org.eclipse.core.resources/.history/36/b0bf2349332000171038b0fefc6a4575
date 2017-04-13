@@ -1,0 +1,15 @@
+package com.hebe.matris;
+
+public abstract class Message {
+
+	//bytes
+	public static final int SIZE = 32;
+
+	public OpCode opCode;
+	
+	public Message(OpCode opCode) {
+		
+	}
+	
+	public abstract byte[] serialize();
+}

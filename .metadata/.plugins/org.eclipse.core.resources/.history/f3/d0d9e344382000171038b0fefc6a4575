@@ -1,0 +1,8 @@
+package com.hebe.matris;
+
+import java.util.concurrent.ConcurrentLinkedDeque;
+
+public class Node {
+
+	private ConcurrentLinkedDeque<E>
+}

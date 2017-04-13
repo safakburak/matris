@@ -1,0 +1,10 @@
+package com.hebe.matris;
+
+public abstract class Message {
+
+	//bytes
+	public static final int SIZE = 32;
+
+	OpCode alive;
+	
+}

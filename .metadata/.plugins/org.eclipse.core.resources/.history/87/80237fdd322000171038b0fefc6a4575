@@ -1,0 +1,7 @@
+package com.hebe.matris;
+
+public abstrac class Message {
+
+	//bytes
+	public static int size = 32;
+}
