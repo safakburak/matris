@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 import matris.messagesocket.MessageSocket;
@@ -39,5 +40,22 @@ public class Coordinator {
 		System.out.println("Starting with " + workers.size() + " workers.");
 
 		watcher = new WorkerWatcher(workers, socket);
+	}
+
+	protected InetSocketAddress[] getAliveWorkers() {
+
+		ArrayList<InetSocketAddress> result = new ArrayList<>();
+
+		for (InetSocketAddress worker : workers.keySet()) {
+
+			Boolean isAlive = workers.get(worker);
+
+			if (isAlive != null && isAlive == true) {
+
+				result.add(worker);
+			}
+		}
+
+		return result.toArray(new InetSocketAddress[] {});
 	}
 }

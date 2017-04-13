@@ -48,17 +48,17 @@ public class MasterMultiplier extends Coordinator {
 
 				if (file.isFile() && tasks.contains(file) == false) {
 
-					Task task = new Task(file, new TaskCallback() {
-
-						@Override
-						public void onComplete(Task task) {
-
-							tasks.remove(task);
-							moveFile(task.getFile());
-						}
-					});
-
-					tasks.put(task, true);
+					// Task task = new Task(file, new TaskCallback() {
+					//
+					// @Override
+					// public void onComplete(Task task, boolean success) {
+					//
+					// tasks.remove(task);
+					// moveFile(task.getFile(), success);
+					// }
+					// });
+					//
+					// tasks.put(task, true);
 				}
 			}
 
@@ -70,14 +70,14 @@ public class MasterMultiplier extends Coordinator {
 
 			} catch (InterruptedException e) {
 
-				e.printStackTrace();
+				// nothing to do
 			}
 		}
 	}
 
-	private void moveFile(File file) {
+	private void moveFile(File file, boolean success) {
 
-		file.renameTo(new File("done/" + file.getName() + "_" + System.nanoTime()));
+		file.renameTo(new File("done/" + file.getName() + (success ? "_SUCCESS_" : "_FAIL_") + System.nanoTime()));
 	}
 
 	public static void main(String[] args) throws IOException {

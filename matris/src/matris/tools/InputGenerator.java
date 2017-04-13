@@ -8,9 +8,6 @@ public class InputGenerator {
 
 	private static void writeMatrix(int rows, int cols, FileWriter writer) throws IOException {
 
-		writer.write(rows + "\n");
-		writer.write(cols + "\n");
-
 		for (int row = 0; row < rows; row++) {
 
 			for (int col = 0; col < cols; col++) {
@@ -44,6 +41,11 @@ public class InputGenerator {
 		int p = 1000;
 		int q = 200;
 		int r = 1000;
+
+		writer.write(p + "\n");
+		writer.write(q + "\n");
+		writer.write(r + "\n");
+		writer.write("\n");
 
 		writeMatrix(p, q, writer);
 		writeMatrix(q, r, writer);

@@ -6,18 +6,17 @@ import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import matris.tools.Util;
+
 public class MessageSocket {
 
-	private DatagramSocket socket;
+	private static final int MAX_ACK_WAITING = 1024;
 
-	private ConcurrentLinkedQueue<DatagramPacket> inbox = new ConcurrentLinkedQueue<>();
-
-	private ConcurrentLinkedQueue<DatagramPacket> outbox = new ConcurrentLinkedQueue<>();
-
-	private ConcurrentHashMap<MessageSocketListener, Boolean> listeners = new ConcurrentHashMap<>();
+	private static final long RETRY_PERIOD = 100;
 
 	private Thread readingThread = new Thread(new Runnable() {
 
@@ -52,6 +51,16 @@ public class MessageSocket {
 		}
 	}, "dispatching thread");
 
+	private DatagramSocket socket;
+
+	private ConcurrentLinkedQueue<Envelope> inbox = new ConcurrentLinkedQueue<>();
+
+	private ConcurrentLinkedQueue<Envelope> outbox = new ConcurrentLinkedQueue<>();
+
+	private ConcurrentHashMap<MessageSocketListener, Boolean> listeners = new ConcurrentHashMap<>();
+
+	private ConcurrentHashMap<Envelope, Long> ackWaitingPackets = new ConcurrentHashMap<>();
+
 	private int port;
 
 	public MessageSocket(int port) throws SocketException {
@@ -79,6 +88,63 @@ public class MessageSocket {
 
 	public void send(Message message, InetSocketAddress address) {
 
+		// if waiting for too many acks
+		// block sender before allowing new
+
+		while (ackWaitingPackets.size() >= MAX_ACK_WAITING) {
+
+			try {
+
+				Thread.sleep(10);
+
+			} catch (InterruptedException e) {
+
+				// nothing to do
+			}
+		}
+
+		outbox.add(new Envelope(message, address));
+	}
+
+	private void read() {
+
+		try {
+
+			DatagramPacket packet = new DatagramPacket(new byte[Message.SIZE], Message.SIZE);
+
+			socket.receive(packet);
+
+			Message message = unpack(packet);
+
+			inbox.add(new Envelope(message, packet.getAddress()));
+
+		} catch (IOException e) {
+
+			e.printStackTrace();
+		}
+	}
+
+	private void dispatch() {
+
+		Envelope envelope = inbox.poll();
+
+		if (envelope == null) {
+
+			Util.sleepSilent(10);
+
+		} else {
+
+			for (MessageSocketListener listener : listeners.keySet()) {
+
+				listener.onMessage(envelope.getMessage(), envelope.getSource());
+			}
+		}
+	}
+
+	private DatagramPacket pack(Message message, InetSocketAddress address) {
+
+		DatagramPacket packet = null;
+
 		try {
 
 			byte[] bytes = Message.toBytes(message);
@@ -90,94 +156,76 @@ public class MessageSocket {
 				bytes = buffer.array();
 			}
 
-			DatagramPacket packet = new DatagramPacket(bytes, Message.SIZE, address);
-
-			outbox.add(packet);
+			packet = new DatagramPacket(bytes, Message.SIZE, address);
 
 		} catch (IOException e) {
 
 			e.printStackTrace();
 		}
+
+		return packet;
 	}
 
-	private void read() {
+	private Message unpack(DatagramPacket packet) {
+
+		Message message = null;
 
 		try {
 
-			DatagramPacket packet = new DatagramPacket(new byte[Message.SIZE], Message.SIZE);
+			message = Message.fromBytes(packet.getData());
 
-			socket.receive(packet);
-
-			inbox.add(packet);
-
-		} catch (IOException e) {
+		} catch (ClassNotFoundException | IOException e) {
 
 			e.printStackTrace();
 		}
-	}
 
-	private void dispatch() {
-
-		if (inbox.isEmpty()) {
-
-			sleepSilent(10);
-
-		} else {
-
-			DatagramPacket packet = inbox.poll();
-
-			if (packet != null) {
-
-				try {
-
-					Message message = Message.fromBytes(packet.getData());
-
-					for (MessageSocketListener listener : listeners.keySet()) {
-
-						listener.onMessage(message, packet.getAddress());
-					}
-
-				} catch (ClassNotFoundException | IOException e) {
-
-					e.printStackTrace();
-				}
-			}
-		}
+		return message;
 	}
 
 	private void write() {
 
-		if (outbox.isEmpty()) {
+		// resend ack waiting messages if enough time passed
 
-			sleepSilent(10);
+		long time = System.currentTimeMillis();
+		long threshold = time - RETRY_PERIOD;
 
-		} else {
+		for (Entry<Envelope, Long> entry : ackWaitingPackets.entrySet()) {
 
-			DatagramPacket packet = outbox.poll();
-
-			if (packet != null) {
+			if (entry.getValue() < threshold) {
 
 				try {
 
-					socket.send(packet);
+					socket.send(pack(entry.getKey().getMessage(), entry.getKey().getDestination()));
 
 				} catch (IOException e) {
 
-					e.printStackTrace();
+					// nothing to do
 				}
+
+				// update retry time
+				ackWaitingPackets.put(entry.getKey(), time);
 			}
 		}
-	}
 
-	private void sleepSilent(long ms) {
+		Envelope envelope = outbox.poll();
 
-		try {
+		if (envelope == null) {
 
-			Thread.sleep(100);
+			Util.sleepSilent(10);
 
-		} catch (InterruptedException e) {
+		} else {
 
-			// nothing to do
+			try {
+
+				socket.send(pack(envelope.getMessage(), envelope.getDestination()));
+
+			} catch (IOException e) {
+
+				// nothing to do
+			}
+
+			// sent or not add to list for retry when necessary
+			ackWaitingPackets.put(envelope, System.currentTimeMillis());
 		}
 	}
 
