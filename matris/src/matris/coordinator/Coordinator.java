@@ -42,7 +42,7 @@ public class Coordinator {
 		watcher = new WorkerWatcher(workers, socket);
 	}
 
-	protected InetSocketAddress[] getAliveWorkers() {
+	protected InetSocketAddress[] getAvailableWorkers() {
 
 		ArrayList<InetSocketAddress> result = new ArrayList<>();
 

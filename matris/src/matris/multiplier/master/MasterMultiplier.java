@@ -48,17 +48,17 @@ public class MasterMultiplier extends Coordinator {
 
 				if (file.isFile() && tasks.contains(file) == false) {
 
-					// Task task = new Task(file, new TaskCallback() {
-					//
-					// @Override
-					// public void onComplete(Task task, boolean success) {
-					//
-					// tasks.remove(task);
-					// moveFile(task.getFile(), success);
-					// }
-					// });
-					//
-					// tasks.put(task, true);
+					Task task = new Task(socket, getAvailableWorkers(), file, new TaskCallback() {
+
+						@Override
+						public void onComplete(Task task, boolean success) {
+
+							tasks.remove(task);
+							moveFile(task.getFile(), success);
+						}
+					});
+
+					tasks.put(task, true);
 				}
 			}
 

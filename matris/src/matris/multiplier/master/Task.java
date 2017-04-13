@@ -23,7 +23,7 @@ public class Task {
 
 	private MessageSocket socket;
 
-	public Task(MessageSocket socket, File file, TaskCallback callback, InetSocketAddress[] workers) {
+	public Task(MessageSocket socket, InetSocketAddress[] workers, File file, TaskCallback callback) {
 
 		this.socket = socket;
 		this.file = file;
@@ -60,8 +60,6 @@ public class Task {
 
 		BufferedReader reader = new BufferedReader(new FileReader(file));
 
-		String line;
-
 		int p = Integer.parseInt(reader.readLine());
 		int q = Integer.parseInt(reader.readLine());
 		int r = Integer.parseInt(reader.readLine());
@@ -85,6 +83,8 @@ public class Task {
 
 			for (int col = 0; col < q; col++) {
 
+				// cols of the second matrix when we are the first matrix
+				// rows of the first matrix when we are the second matrix
 				int orderDimSize = (matrixNo == 1 ? r : p);
 
 				for (int k = 0; k < orderDimSize; k++) {
