@@ -1,4 +1,6 @@
 .metadata/
 .recommenders/
 .DS_Store
+**/bin/**
+
 
