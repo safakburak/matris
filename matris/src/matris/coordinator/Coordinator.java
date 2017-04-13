@@ -15,7 +15,7 @@ public class Coordinator {
 	@SuppressWarnings("unused")
 	private WorkerWatcher watcher;
 
-	private MessageSocket socket;
+	protected MessageSocket socket;
 
 	public Coordinator(int port) throws IOException {
 
@@ -39,10 +39,5 @@ public class Coordinator {
 		System.out.println("Starting with " + workers.size() + " workers.");
 
 		watcher = new WorkerWatcher(workers, socket);
-	}
-
-	public static void main(String[] args) throws IOException {
-
-		Coordinator coordinator = new Coordinator(10000);
 	}
 }

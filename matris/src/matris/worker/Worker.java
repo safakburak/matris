@@ -10,7 +10,7 @@ import matris.messagesocket.MessageSocketListener;
 
 public class Worker {
 
-	private MessageSocket socket;
+	protected MessageSocket socket;
 
 	public Worker(int port) throws SocketException {
 
@@ -29,10 +29,5 @@ public class Worker {
 				}
 			}
 		});
-	}
-
-	public static void main(String[] args) throws SocketException {
-
-		Worker worker = new Worker(11125);
 	}
 }
