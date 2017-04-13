@@ -1,0 +1,12 @@
+package matris.coordinator;
+
+import org.junit.Test;
+
+public class CoordinatorTest {
+
+	@Test
+	public void test() {
+		
+		Coordinator coordinator = new Coordinator();
+	}
+}

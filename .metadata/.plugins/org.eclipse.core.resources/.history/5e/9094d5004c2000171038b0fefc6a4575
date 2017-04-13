@@ -1,0 +1,14 @@
+package matris.worker;
+
+import java.net.DatagramSocket;
+
+import matris.messagesocket.MessageSocket;
+
+public class Worker {
+
+	private MessageSocket socket;
+	
+	public Worker(int port) {
+
+	}
+}

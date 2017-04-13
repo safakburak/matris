@@ -1,0 +1,38 @@
+package matris.coordinator;
+
+import java.net.InetSocketAddress;
+import java.util.HashMap;
+
+import matris.messagesocket.MessageSocket;
+
+public class WorkerWatcher {
+
+	private Thread watchingThread = new Thread(new Runnable() {
+
+		public void run() {
+
+			while (true) {
+
+				watch();
+			}
+		}
+	}, "watching thread");
+
+	private HashMap<InetSocketAddress, Boolean> workers;
+
+	private MessageSocket socket;
+
+	public WorkerWatcher(HashMap<InetSocketAddress, Boolean> workers, MessageSocket socket) {
+
+		this.workers = workers;
+		this.socket = socket;
+
+		watchingThread.start();
+	}
+
+	private void watch() {
+
+		
+		
+	}
+}

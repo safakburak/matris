@@ -1,0 +1,28 @@
+package matris.coordinator;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.concurrent.ConcurrentHashMap;
+
+public class Coordinator {
+
+	private ConcurrentHashMap<InetSocketAddress, Boolean> workers = new ConcurrentHashMap<>();
+
+	public Coordinator() throws IOException {
+
+		BufferedReader reader = new BufferedReader(new FileReader("hosts.txt"));
+
+		String line;
+
+		while ((line = reader.readLine()) != null) {
+
+			String[] tokens = line.split(":");
+			
+			
+		}
+
+		reader.close();
+	}
+}

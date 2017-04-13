@@ -1,0 +1,48 @@
+package matris.coordinator;
+
+import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
+
+import matris.messagesocket.MessageSocket;
+
+public class WorkerWatcher {
+
+	private Thread watchingThread = new Thread(new Runnable() {
+
+		public void run() {
+
+			while (true) {
+
+				watch();
+			}
+		}
+	}, "watching thread");
+
+	private HashMap<InetSocketAddress, Boolean> workers;
+
+	private MessageSocket socket;
+
+	private ConcurrentHashMap<InetSocketAddress, Long> lastPingTimes = new ConcurrentHashMap<>();
+
+	public WorkerWatcher(HashMap<InetSocketAddress, Boolean> workers, MessageSocket socket) {
+
+		this.workers = workers;
+		this.socket = socket;
+
+		watchingThread.start();
+	}
+
+	private void watch() {
+
+		try {
+			
+			Thread.sleep(1000);
+			
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
+}

@@ -1,0 +1,14 @@
+package matris.coordinator;
+
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+
+public class Coordinator {
+
+	public Coordinator() throws FileNotFoundException {
+
+		FileReader reader = new FileReader("hosts.txt");
+		
+		
+	}
+}

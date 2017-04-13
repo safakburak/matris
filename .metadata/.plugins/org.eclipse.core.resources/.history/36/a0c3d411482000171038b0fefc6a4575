@@ -1,0 +1,20 @@
+package matris.coordinator;
+
+import java.net.InetSocketAddress;
+import java.util.HashMap;
+
+public class WorkerWatcher {
+
+	private Thread watchingThread = new Thread(new new Runnable() {
+		public void run() {
+		
+			while(true) {
+				
+			}
+		}
+	});
+
+	public WorkerWatcher(HashMap<InetSocketAddress, Boolean> workers) {
+
+	}
+}

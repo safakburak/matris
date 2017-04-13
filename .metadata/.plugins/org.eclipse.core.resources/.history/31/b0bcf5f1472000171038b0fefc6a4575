@@ -1,0 +1,7 @@
+package matris.coordinator;
+
+public class WorkerWatcher {
+
+	public WorkerWatcher() {
+	}
+}

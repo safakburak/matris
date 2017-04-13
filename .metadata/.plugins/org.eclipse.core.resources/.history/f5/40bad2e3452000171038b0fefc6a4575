@@ -1,0 +1,8 @@
+package matris.coordinator;
+
+public class Coordinator {
+
+	public Coordinator() {
+		// TODO Auto-generated constructor stub
+	}
+}

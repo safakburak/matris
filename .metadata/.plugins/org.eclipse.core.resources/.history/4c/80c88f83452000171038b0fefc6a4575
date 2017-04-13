@@ -1,0 +1,32 @@
+package matris.messagesocket;
+
+import static org.junit.Assert.fail;
+
+import org.junit.Test;
+
+public class MessageSocketTest {
+
+	private MessageSocket socket1;
+	private MessageSocket socket2;
+
+	private String socket1Sent;
+	private String socket2Sent;
+
+	private String socket1Received;
+	private String socket2Received;
+
+	@Test
+	public void test() {
+
+		try {
+
+			Thread.sleep(2000);
+
+		} catch (InterruptedException e) {
+
+			e.printStackTrace();
+		}
+
+		fail("Not yet implemented");
+	}
+}
