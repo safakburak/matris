@@ -1,4 +1,4 @@
-package matris;
+package matris.messages;
 
 import matris.messagesocket.Message;
 

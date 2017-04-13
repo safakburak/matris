@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentHashMap;
@@ -78,7 +77,7 @@ public class MessageSocket {
 		send(message, address);
 	}
 
-	public void send(Message message, SocketAddress address) {
+	public void send(Message message, InetSocketAddress address) {
 
 		try {
 

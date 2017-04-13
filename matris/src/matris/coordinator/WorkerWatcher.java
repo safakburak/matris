@@ -4,7 +4,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ConcurrentHashMap;
 
-import matris.MsgPing;
+import matris.messages.MsgPing;
 import matris.messagesocket.Message;
 import matris.messagesocket.MessageSocket;
 import matris.messagesocket.MessageSocketListener;
