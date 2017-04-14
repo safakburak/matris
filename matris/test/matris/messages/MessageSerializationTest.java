@@ -8,7 +8,7 @@ import org.junit.Test;
 
 import matris.messagesocket.Message;
 
-public class MessageTypesTest {
+public class MessageSerializationTest {
 
 	@Test
 	public void test() throws ClassNotFoundException, IOException {

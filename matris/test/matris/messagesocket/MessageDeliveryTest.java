@@ -2,14 +2,13 @@ package matris.messagesocket;
 
 import static org.junit.Assert.assertTrue;
 
-import java.net.InetAddress;
 import java.net.SocketException;
 
 import org.junit.Test;
 
 import matris.tools.Util;
 
-public class MessageSocketTest {
+public class MessageDeliveryTest {
 
 	private MessageSocket socket1;
 	private MessageSocket socket2;
@@ -29,7 +28,7 @@ public class MessageSocketTest {
 		socket1.addListener(new MessageSocketListener() {
 
 			@Override
-			public void onMessage(Message message, InetAddress from) {
+			public void onMessage(Message message) {
 
 				socket1Received = message.toString();
 			}
@@ -38,7 +37,7 @@ public class MessageSocketTest {
 		socket2.addListener(new MessageSocketListener() {
 
 			@Override
-			public void onMessage(Message message, InetAddress from) {
+			public void onMessage(Message message) {
 
 				socket2Received = message.toString();
 			}
@@ -53,10 +52,13 @@ public class MessageSocketTest {
 		socket1Sent = message1.toString();
 		socket2Sent = message2.toString();
 
-		socket1.send(message1, "localhost", 4321);
-		socket2.send(message2, "localhost", 1234);
+		message1.setDestination("localhost", 4321);
+		message2.setDestination("localhost", 1234);
 
-		Util.sleepSilent(200);
+		socket1.send(message1);
+		socket2.send(message2);
+
+		Util.sleepSilent(1000);
 
 		assertTrue(socket1Sent.equals(socket2Received));
 		assertTrue(socket2Sent.equals(socket1Received));

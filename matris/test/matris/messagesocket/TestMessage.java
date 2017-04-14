@@ -44,7 +44,7 @@ public class TestMessage extends Message {
 
 		int firstZeroIndex;
 
-		for (firstZeroIndex = 4; firstZeroIndex < Message.MESSAGE_SIZE; firstZeroIndex++) {
+		for (firstZeroIndex = buffer.position(); firstZeroIndex < Message.MESSAGE_SIZE; firstZeroIndex++) {
 
 			if (buffer.array()[firstZeroIndex] == 0) {
 
@@ -52,6 +52,6 @@ public class TestMessage extends Message {
 			}
 		}
 
-		text = new String(buffer.array(), 4, firstZeroIndex - 4);
+		text = new String(buffer.array(), buffer.position(), firstZeroIndex - buffer.position());
 	}
 }

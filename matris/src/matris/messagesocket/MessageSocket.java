@@ -5,11 +5,11 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
-import java.nio.ByteBuffer;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import matris.messages.MsgAck;
 import matris.tools.Util;
 
 public class MessageSocket {
@@ -53,25 +53,45 @@ public class MessageSocket {
 
 	private DatagramSocket socket;
 
-	private ConcurrentLinkedQueue<Envelope> inbox = new ConcurrentLinkedQueue<>();
+	private ConcurrentLinkedQueue<Message> inbox = new ConcurrentLinkedQueue<>();
 
-	private ConcurrentLinkedQueue<Envelope> outbox = new ConcurrentLinkedQueue<>();
+	private ConcurrentLinkedQueue<Message> outbox = new ConcurrentLinkedQueue<>();
 
 	private ConcurrentHashMap<MessageSocketListener, Boolean> listeners = new ConcurrentHashMap<>();
 
-	private ConcurrentHashMap<Envelope, Long> ackWaitingPackets = new ConcurrentHashMap<>();
+	private ConcurrentHashMap<Message, Long> ackWaitingMessages = new ConcurrentHashMap<>();
 
 	private int port;
 
+	private boolean started = false;
+
 	public MessageSocket(int port) throws SocketException {
+
+		this(port, true);
+	}
+
+	public MessageSocket(int port, boolean start) throws SocketException {
 
 		this.port = port;
 
 		socket = new DatagramSocket(port);
 
-		readingThread.start();
-		writingThread.start();
-		dispatchingThread.start();
+		if (start) {
+
+			start();
+		}
+	}
+
+	public synchronized void start() {
+
+		if (started == false) {
+
+			readingThread.start();
+			writingThread.start();
+			dispatchingThread.start();
+
+			started = true;
+		}
 	}
 
 	public void addListener(MessageSocketListener listener) {
@@ -79,19 +99,12 @@ public class MessageSocket {
 		listeners.putIfAbsent(listener, true);
 	}
 
-	public void send(Message message, String hostname, int port) {
-
-		InetSocketAddress address = new InetSocketAddress(hostname, port);
-
-		send(message, address);
-	}
-
-	public void send(Message message, InetSocketAddress address) {
+	public void send(Message message) {
 
 		// if waiting for too many acks
 		// block sender before allowing new
 
-		while (ackWaitingPackets.size() >= MAX_ACK_WAITING) {
+		while (ackWaitingMessages.size() >= MAX_ACK_WAITING) {
 
 			try {
 
@@ -103,7 +116,7 @@ public class MessageSocket {
 			}
 		}
 
-		outbox.add(new Envelope(message, address));
+		outbox.add(message);
 	}
 
 	private void read() {
@@ -116,7 +129,17 @@ public class MessageSocket {
 
 			Message message = unpack(packet);
 
-			inbox.add(new Envelope(message, packet.getAddress()));
+			if (message instanceof MsgAck) {
+
+				MsgAck msgAck = (MsgAck) message;
+
+				// id holds hash value of the message
+				ackWaitingMessages.remove(msgAck.getMessageIdToAck());
+
+			} else {
+
+				inbox.add(message);
+			}
 
 		} catch (IOException e) {
 
@@ -126,9 +149,9 @@ public class MessageSocket {
 
 	private void dispatch() {
 
-		Envelope envelope = inbox.poll();
+		Message message = inbox.poll();
 
-		if (envelope == null) {
+		if (message == null) {
 
 			Util.sleepSilent(10);
 
@@ -136,27 +159,23 @@ public class MessageSocket {
 
 			for (MessageSocketListener listener : listeners.keySet()) {
 
-				listener.onMessage(envelope.getMessage(), envelope.getSource());
+				listener.onMessage(message);
 			}
 		}
 	}
 
-	private DatagramPacket pack(Message message, InetSocketAddress address) {
+	private DatagramPacket pack(Message message) {
 
 		DatagramPacket packet = null;
 
 		try {
 
+			message.setSrcPort(port);
+
 			byte[] bytes = Message.toBytes(message);
 
-			if (bytes.length < Message.MESSAGE_SIZE) {
-
-				ByteBuffer buffer = ByteBuffer.allocate(Message.MESSAGE_SIZE);
-				buffer.put(bytes);
-				bytes = buffer.array();
-			}
-
-			packet = new DatagramPacket(bytes, Message.MESSAGE_SIZE, address);
+			packet = new DatagramPacket(bytes, Message.MESSAGE_SIZE,
+					new InetSocketAddress(message.getDestHost(), message.getDestPort()));
 
 		} catch (IOException e) {
 
@@ -174,6 +193,8 @@ public class MessageSocket {
 
 			message = Message.fromBytes(packet.getData());
 
+			message.setSrcHost(packet.getAddress().getHostName());
+
 		} catch (ClassNotFoundException | IOException e) {
 
 			e.printStackTrace();
@@ -189,13 +210,13 @@ public class MessageSocket {
 		long time = System.currentTimeMillis();
 		long threshold = time - RETRY_PERIOD;
 
-		for (Entry<Envelope, Long> entry : ackWaitingPackets.entrySet()) {
+		for (Entry<Message, Long> entry : ackWaitingMessages.entrySet()) {
 
 			if (entry.getValue() < threshold) {
 
 				try {
 
-					socket.send(pack(entry.getKey().getMessage(), entry.getKey().getDestination()));
+					socket.send(pack(entry.getKey()));
 
 				} catch (IOException e) {
 
@@ -203,13 +224,13 @@ public class MessageSocket {
 				}
 
 				// update retry time
-				ackWaitingPackets.put(entry.getKey(), time);
+				ackWaitingMessages.put(entry.getKey(), time);
 			}
 		}
 
-		Envelope envelope = outbox.poll();
+		Message message = outbox.poll();
 
-		if (envelope == null) {
+		if (message == null) {
 
 			Util.sleepSilent(10);
 
@@ -217,7 +238,7 @@ public class MessageSocket {
 
 			try {
 
-				socket.send(pack(envelope.getMessage(), envelope.getDestination()));
+				socket.send(pack(message));
 
 			} catch (IOException e) {
 
@@ -225,7 +246,10 @@ public class MessageSocket {
 			}
 
 			// sent or not add to list for retry when necessary
-			ackWaitingPackets.put(envelope, System.currentTimeMillis());
+			if (message.isAckRequired()) {
+
+				ackWaitingMessages.put(message, System.currentTimeMillis());
+			}
 		}
 	}
 

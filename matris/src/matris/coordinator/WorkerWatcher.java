@@ -1,6 +1,5 @@
 package matris.coordinator;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -47,13 +46,13 @@ public class WorkerWatcher {
 		socket.addListener(new MessageSocketListener() {
 
 			@Override
-			public void onMessage(Message message, InetAddress from) {
+			public void onMessage(Message message) {
 
 				if (message instanceof MsgPing) {
 
 					MsgPing ping = (MsgPing) message;
 
-					InetSocketAddress worker = new InetSocketAddress(from.getHostName(), ping.getPort());
+					InetSocketAddress worker = new InetSocketAddress(message.getSource().getHostName(), ping.getPort());
 
 					lastPingTimes.put(worker, System.currentTimeMillis());
 				}
