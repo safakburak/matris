@@ -4,22 +4,58 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
+import matris.messages.MsgPing;
+import matris.messagesocket.Message;
 import matris.messagesocket.MessageSocket;
+import matris.messagesocket.MessageSocketListener;
+import matris.tools.Util;
 
 public class Coordinator {
 
-	private ConcurrentHashMap<WorkerAddress, Boolean> workers = new ConcurrentHashMap<>();
+	private static final int THRESHOLD = 1000;
+	private static final int WAIT = 250;
 
-	@SuppressWarnings("unused")
-	private WorkerWatcher watcher;
+	private Thread watchingThread = new Thread(new Runnable() {
+
+		public void run() {
+
+			while (true) {
+
+				watch();
+			}
+		}
+	}, "watching thread");
 
 	protected MessageSocket socket;
+
+	private ConcurrentHashMap<WorkerAddress, WorkerState> workerStates = new ConcurrentHashMap<>();
 
 	public Coordinator(int port) throws IOException {
 
 		socket = new MessageSocket(port);
+
+		socket.addListener(new MessageSocketListener() {
+
+			@Override
+			public void onMessage(Message message) {
+
+				if (message instanceof MsgPing) {
+
+					MsgPing ping = (MsgPing) message;
+
+					WorkerAddress key = new WorkerAddress(ping.getSrcHost(), ping.getSrcPort());
+					WorkerState oldState = workerStates.get(key);
+
+					WorkerState newState = new WorkerState(oldState.isUp(), System.currentTimeMillis());
+
+					workerStates.put(key, newState);
+				}
+			}
+		});
 
 		BufferedReader reader = new BufferedReader(new FileReader("hosts.txt"));
 
@@ -29,42 +65,88 @@ public class Coordinator {
 
 			String[] tokens = line.split(":");
 
-			workers.put(new WorkerAddress(tokens[0], Integer.parseInt(tokens[1])), true);
+			WorkerState state = new WorkerState(true, System.currentTimeMillis());
+
+			workerStates.put(new WorkerAddress(tokens[0], Integer.parseInt(tokens[1])), state);
 		}
 
 		reader.close();
 
-		System.out.println("Starting with " + workers.size() + " workers.");
+		System.out.println("Starting with " + workerStates.size() + " workers.");
 
-		watcher = new WorkerWatcher(workers, socket);
+		watchingThread.start();
 	}
 
-	public WorkerAddress[] getAvailableWorkers() {
+	private void watch() {
+
+		// ping
+		for (WorkerAddress worker : workerStates.keySet()) {
+
+			MsgPing msgPing = new MsgPing();
+			msgPing.setDestination(worker.getHost(), worker.getPort());
+
+			socket.send(msgPing, true);
+		}
+
+		Util.sleepSilent(WAIT);
+
+		// check
+		long limit = System.currentTimeMillis() - THRESHOLD;
+
+		for (Entry<WorkerAddress, WorkerState> entry : workerStates.entrySet()) {
+
+			WorkerAddress key = entry.getKey();
+			WorkerState oldState = entry.getValue();
+
+			WorkerState newState = new WorkerState(oldState.getLastPingTime() >= limit, oldState.getLastPingTime());
+
+			workerStates.put(key, newState);
+
+			if (oldState.isUp() == false && newState.isUp() == true) {
+
+				onWorkerUp(key);
+
+			} else if (oldState.isUp() == true && newState.isUp() == false) {
+
+				onWorkerDown(key);
+			}
+		}
+	}
+
+	public List<WorkerAddress> getAllWorkers() {
 
 		ArrayList<WorkerAddress> result = new ArrayList<>();
 
-		for (WorkerAddress worker : workers.keySet()) {
+		for (Entry<WorkerAddress, WorkerState> e : workerStates.entrySet()) {
 
-			Boolean isAlive = workers.get(worker);
+			result.add(e.getKey());
+		}
 
-			if (isAlive != null && isAlive == true) {
+		return result;
+	}
 
-				result.add(worker);
+	public List<WorkerAddress> getUpWorkers() {
+
+		ArrayList<WorkerAddress> result = new ArrayList<>();
+
+		for (Entry<WorkerAddress, WorkerState> e : workerStates.entrySet()) {
+
+			if (e.getValue().isUp() == true) {
+
+				result.add(e.getKey());
 			}
 		}
 
-		return result.toArray(new WorkerAddress[] {});
+		return result;
 	}
 
-	public WorkerAddress[] getAllWorkers() {
+	protected void onWorkerDown(WorkerAddress address) {
 
-		ArrayList<WorkerAddress> result = new ArrayList<>();
+		System.out.println(address + " is DOWN!");
+	}
 
-		for (WorkerAddress worker : workers.keySet()) {
+	protected void onWorkerUp(WorkerAddress address) {
 
-			result.add(worker);
-		}
-
-		return result.toArray(new WorkerAddress[] {});
+		System.out.println(address + " is UP!");
 	}
 }
