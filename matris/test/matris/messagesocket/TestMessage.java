@@ -18,40 +18,51 @@ public class TestMessage extends Message {
 		});
 	}
 
-	private String text;
+	private long time;
 
 	public TestMessage() {
 
 		super(OPCODE);
 
-		text = "Text message created at: " + System.currentTimeMillis();
+		time = System.currentTimeMillis();
 	}
 
-	@Override
-	public String toString() {
+	public long getTime() {
 
-		return text;
+		return time;
 	}
 
 	@Override
 	protected void serialize(ByteBuffer buffer) {
 
-		buffer.put(text.getBytes());
+		buffer.putLong(time);
 	}
 
 	@Override
 	protected void deserialize(ByteBuffer buffer) {
 
-		int firstZeroIndex;
+		time = buffer.getLong();
+	}
 
-		for (firstZeroIndex = buffer.position(); firstZeroIndex < Message.MESSAGE_SIZE; firstZeroIndex++) {
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (int) (time ^ (time >>> 32));
+		return result;
+	}
 
-			if (buffer.array()[firstZeroIndex] == 0) {
-
-				break;
-			}
-		}
-
-		text = new String(buffer.array(), buffer.position(), firstZeroIndex - buffer.position());
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		TestMessage other = (TestMessage) obj;
+		if (time != other.time)
+			return false;
+		return true;
 	}
 }

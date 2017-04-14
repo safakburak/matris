@@ -25,7 +25,7 @@ public class MessageReliableDeliveryTest {
 
 		sender.send(message);
 
-		Util.sleepSilent(10000);
+		Util.sleepSilent(1000);
 
 		receiver = new MessageSocket(4321, false);
 		receiver.addListener(new MessageSocketListener() {
@@ -38,7 +38,7 @@ public class MessageReliableDeliveryTest {
 		});
 		receiver.start();
 
-		Util.sleepSilent(10000);
+		Util.sleepSilent(1000);
 
 		// there is no guarantee of single delivery
 		// but on the same machine we expect to be fast enough for single

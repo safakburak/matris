@@ -16,7 +16,7 @@ public class MessageSocket {
 
 	private static final int MAX_ACK_WAITING = 1024;
 
-	private static final long RETRY_PERIOD = 1000;
+	private static final long RETRY_PERIOD = 100;
 
 	private Thread readingThread = new Thread(new Runnable() {
 

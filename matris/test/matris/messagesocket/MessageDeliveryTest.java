@@ -13,11 +13,11 @@ public class MessageDeliveryTest {
 	private MessageSocket socket1;
 	private MessageSocket socket2;
 
-	private String socket1Sent;
-	private String socket2Sent;
+	private long socket1Sent;
+	private long socket2Sent;
 
-	private String socket1Received;
-	private String socket2Received;
+	private long socket1Received;
+	private long socket2Received;
 
 	@Test
 	public void test() throws SocketException {
@@ -30,7 +30,7 @@ public class MessageDeliveryTest {
 			@Override
 			public void onMessage(Message message) {
 
-				socket1Received = message.toString();
+				socket1Received = ((TestMessage) message).getTime();
 			}
 		});
 
@@ -39,7 +39,7 @@ public class MessageDeliveryTest {
 			@Override
 			public void onMessage(Message message) {
 
-				socket2Received = message.toString();
+				socket2Received = ((TestMessage) message).getTime();
 			}
 		});
 
@@ -49,8 +49,8 @@ public class MessageDeliveryTest {
 
 		TestMessage message2 = new TestMessage();
 
-		socket1Sent = message1.toString();
-		socket2Sent = message2.toString();
+		socket1Sent = ((TestMessage) message1).getTime();
+		socket2Sent = ((TestMessage) message2).getTime();
 
 		message1.setDestination("localhost", 4321);
 		message2.setDestination("localhost", 1234);
@@ -58,9 +58,9 @@ public class MessageDeliveryTest {
 		socket1.send(message1);
 		socket2.send(message2);
 
-		Util.sleepSilent(1000);
+		Util.sleepSilent(100);
 
-		assertTrue(socket1Sent.equals(socket2Received));
-		assertTrue(socket2Sent.equals(socket1Received));
+		assertTrue(socket1Sent == socket2Received);
+		assertTrue(socket2Sent == socket1Received);
 	}
 }
