@@ -6,7 +6,7 @@ public class Util {
 
 		try {
 
-			Thread.sleep(100);
+			Thread.sleep(ms);
 
 		} catch (InterruptedException e) {
 

@@ -56,7 +56,7 @@ public class MessageSocketTest {
 		socket1.send(message1, "localhost", 4321);
 		socket2.send(message2, "localhost", 1234);
 
-		Util.sleepSilent(100);
+		Util.sleepSilent(200);
 
 		assertTrue(socket1Sent.equals(socket2Received));
 		assertTrue(socket2Sent.equals(socket1Received));
