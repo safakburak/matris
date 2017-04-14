@@ -12,7 +12,7 @@ public class MessageReliableDeliveryTest {
 
 	private MessageSocket sender;
 	private MessageSocket receiver;
-	private boolean success = false;
+	private int receiveCount = 0;
 
 	@Test
 	public void test() throws SocketException {
@@ -33,13 +33,16 @@ public class MessageReliableDeliveryTest {
 			@Override
 			public void onMessage(Message message) {
 
-				success = true;
+				receiveCount++;
 			}
 		});
 		receiver.start();
 
 		Util.sleepSilent(10000);
 
-		assertTrue(success);
+		// there is no guarantee of single delivery
+		// but on the same machine we expect to be fast enough for single
+		// delivery
+		assertTrue(receiveCount == 1);
 	}
 }

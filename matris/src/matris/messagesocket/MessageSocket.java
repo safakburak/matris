@@ -16,7 +16,7 @@ public class MessageSocket {
 
 	private static final int MAX_ACK_WAITING = 1024;
 
-	private static final long RETRY_PERIOD = 100;
+	private static final long RETRY_PERIOD = 1000;
 
 	private Thread readingThread = new Thread(new Runnable() {
 
@@ -55,11 +55,13 @@ public class MessageSocket {
 
 	private ConcurrentLinkedQueue<Message> inbox = new ConcurrentLinkedQueue<>();
 
+	private ConcurrentLinkedQueue<Message> urgentOutbox = new ConcurrentLinkedQueue<>();
+
 	private ConcurrentLinkedQueue<Message> outbox = new ConcurrentLinkedQueue<>();
 
 	private ConcurrentHashMap<MessageSocketListener, Boolean> listeners = new ConcurrentHashMap<>();
 
-	private ConcurrentHashMap<Message, Long> ackWaitingMessages = new ConcurrentHashMap<>();
+	private ConcurrentHashMap<Integer, Message> ackWaitingMessages = new ConcurrentHashMap<>();
 
 	private int port;
 
@@ -101,22 +103,34 @@ public class MessageSocket {
 
 	public void send(Message message) {
 
-		// if waiting for too many acks
-		// block sender before allowing new
+		send(message, false);
+	}
 
-		while (ackWaitingMessages.size() >= MAX_ACK_WAITING) {
+	public void send(Message message, boolean urgent) {
 
-			try {
+		if (urgent) {
 
-				Thread.sleep(10);
+			urgentOutbox.add(message);
 
-			} catch (InterruptedException e) {
+		} else {
 
-				// nothing to do
+			// if waiting for too many acks
+			// block sender before allowing new
+
+			while (ackWaitingMessages.size() >= MAX_ACK_WAITING) {
+
+				try {
+
+					Thread.sleep(10);
+
+				} catch (InterruptedException e) {
+
+					// nothing to do
+				}
 			}
-		}
 
-		outbox.add(message);
+			outbox.add(message);
+		}
 	}
 
 	private void read() {
@@ -137,6 +151,15 @@ public class MessageSocket {
 				ackWaitingMessages.remove(msgAck.getMessageIdToAck());
 
 			} else {
+
+				if (message.isAckRequired()) {
+
+					MsgAck msgAck = new MsgAck();
+					msgAck.setDestination(message.getSrcHost(), message.getSrcPort());
+					msgAck.setMessageIdToAck(message.getMessageId());
+
+					urgentOutbox.add(msgAck);
+				}
 
 				inbox.add(message);
 			}
@@ -205,18 +228,39 @@ public class MessageSocket {
 
 	private void write() {
 
+		boolean didSomething = false;
+
+		while (urgentOutbox.isEmpty() == false) {
+
+			Message message = urgentOutbox.poll();
+
+			if (message != null) {
+
+				try {
+
+					socket.send(pack(message));
+
+				} catch (IOException e) {
+
+					// nothing to do
+				}
+			}
+
+			didSomething = true;
+		}
+
 		// resend ack waiting messages if enough time passed
 
 		long time = System.currentTimeMillis();
 		long threshold = time - RETRY_PERIOD;
 
-		for (Entry<Message, Long> entry : ackWaitingMessages.entrySet()) {
+		for (Entry<Integer, Message> entry : ackWaitingMessages.entrySet()) {
 
-			if (entry.getValue() < threshold) {
+			if (entry.getValue().getLastSendTime() < threshold) {
 
 				try {
 
-					socket.send(pack(entry.getKey()));
+					socket.send(pack(entry.getValue()));
 
 				} catch (IOException e) {
 
@@ -224,17 +268,15 @@ public class MessageSocket {
 				}
 
 				// update retry time
-				ackWaitingMessages.put(entry.getKey(), time);
+				entry.getValue().setLastSendTime(time);
 			}
+
+			didSomething = true;
 		}
 
 		Message message = outbox.poll();
 
-		if (message == null) {
-
-			Util.sleepSilent(10);
-
-		} else {
+		if (message != null) {
 
 			try {
 
@@ -248,8 +290,17 @@ public class MessageSocket {
 			// sent or not add to list for retry when necessary
 			if (message.isAckRequired()) {
 
-				ackWaitingMessages.put(message, System.currentTimeMillis());
+				message.setLastSendTime(System.currentTimeMillis());
+
+				ackWaitingMessages.put(message.getMessageId(), message);
 			}
+
+			didSomething = true;
+		}
+
+		if (didSomething == false) {
+
+			Util.sleepSilent(10);
 		}
 	}
 

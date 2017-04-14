@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @SuppressWarnings("serial")
 public abstract class Message implements Serializable {
@@ -12,6 +13,8 @@ public abstract class Message implements Serializable {
 	public static final int MESSAGE_SIZE = 1024;
 
 	private static HashMap<Integer, MessageCreator> creators = new HashMap<>();
+
+	private static AtomicInteger nextId = new AtomicInteger();
 
 	private int messageId;
 
@@ -27,10 +30,18 @@ public abstract class Message implements Serializable {
 
 	private byte ackRequired;
 
+	private long lastSendTime;
+
 	public Message(int opCode) {
 
 		this.opCode = opCode;
-		this.messageId = hashCode();
+		this.messageId = nextId.incrementAndGet();
+
+		// dont push this far :D
+		if (this.messageId > Integer.MAX_VALUE / 2) {
+
+			nextId.set(0);
+		}
 
 		setAckRequired(false);
 	}
@@ -101,6 +112,16 @@ public abstract class Message implements Serializable {
 		this.ackRequired = (byte) (ackRequired ? 1 : 0);
 	}
 
+	public long getLastSendTime() {
+
+		return lastSendTime;
+	}
+
+	public void setLastSendTime(long lastSendTime) {
+
+		this.lastSendTime = lastSendTime;
+	}
+
 	protected abstract void serialize(ByteBuffer buffer);
 
 	protected abstract void deserialize(ByteBuffer buffer);
@@ -113,6 +134,7 @@ public abstract class Message implements Serializable {
 		buffer.putInt(message.opCode);
 		buffer.putInt(message.srcPort);
 		buffer.put(message.ackRequired);
+		buffer.putInt(message.messageId);
 
 		message.serialize(buffer);
 
@@ -136,6 +158,7 @@ public abstract class Message implements Serializable {
 
 		result.srcPort = buffer.getInt();
 		result.ackRequired = buffer.get();
+		result.messageId = buffer.getInt();
 
 		result.deserialize(buffer);
 
