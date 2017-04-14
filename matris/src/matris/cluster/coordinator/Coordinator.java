@@ -104,11 +104,11 @@ public class Coordinator {
 
 			if (oldState.isUp() == false && newState.isUp() == true) {
 
-				onWorkerUp(key);
+				doOnWorkerUp(key);
 
 			} else if (oldState.isUp() == true && newState.isUp() == false) {
 
-				onWorkerDown(key);
+				doOnWorkerDown(key);
 			}
 		}
 	}
@@ -140,13 +140,25 @@ public class Coordinator {
 		return result;
 	}
 
-	protected void onWorkerDown(WorkerAddress address) {
+	private void doOnWorkerDown(WorkerAddress address) {
 
 		System.out.println(address + " is DOWN!");
+
+		onWorkerDown(address);
+	}
+
+	protected void onWorkerDown(WorkerAddress address) {
+
+	}
+
+	private void doOnWorkerUp(WorkerAddress address) {
+
+		System.out.println(address + " is UP!");
+
+		onWorkerUp(address);
 	}
 
 	protected void onWorkerUp(WorkerAddress address) {
 
-		System.out.println(address + " is UP!");
 	}
 }
