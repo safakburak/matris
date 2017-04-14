@@ -23,7 +23,7 @@ public class MasterMultiplier extends Coordinator {
 	private File outputDir;
 	private File completedDir;
 
-	private ConcurrentHashMap<Task, Boolean> tasks = new ConcurrentHashMap<>();
+	private ConcurrentHashMap<MasterTask, Boolean> tasks = new ConcurrentHashMap<>();
 
 	public MasterMultiplier(int port) throws IOException {
 
@@ -48,10 +48,10 @@ public class MasterMultiplier extends Coordinator {
 
 				if (file.isFile() && tasks.contains(file) == false) {
 
-					Task task = new Task(socket, getAvailableWorkers(), file, new TaskCallback() {
+					MasterTask task = new MasterTask(socket, getAvailableWorkers(), file, new MasterTaskCallback() {
 
 						@Override
-						public void onComplete(Task task, boolean success) {
+						public void onComplete(MasterTask task, boolean success) {
 
 							tasks.remove(task);
 							moveFile(task.getFile(), success);
