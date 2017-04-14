@@ -33,7 +33,7 @@ public class SlaveMultiplier extends Worker implements MessageSocketListener {
 
 			SlaveTask task = tasks.get(start.getTaskId());
 
-			task.setSize(start.getSize());
+			task.setSize(start.getQ());
 
 			checkAndCompleteTast(task);
 

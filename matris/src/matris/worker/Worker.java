@@ -23,9 +23,10 @@ public class Worker {
 
 				if (message instanceof MsgPing) {
 
-					MsgPing ping = (MsgPing) message;
+					MsgPing msgPing = (MsgPing) message;
+					msgPing.setPort(socket.getPort());
 
-					socket.send(new MsgPing(socket.getPort()), from.getHostName(), ping.getPort());
+					socket.send(msgPing, from.getHostName(), msgPing.getPort());
 				}
 			}
 		});

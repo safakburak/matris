@@ -66,7 +66,10 @@ public class WorkerWatcher {
 		// ping
 		for (InetSocketAddress worker : workers.keySet()) {
 
-			socket.send(new MsgPing(socket.getPort()), worker);
+			MsgPing msgPing = new MsgPing();
+			msgPing.setPort(socket.getPort());
+
+			socket.send(msgPing, worker);
 		}
 
 		try {

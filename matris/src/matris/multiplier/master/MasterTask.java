@@ -110,12 +110,12 @@ public class MasterTask {
 		// empty line
 		reader.readLine();
 
-		comsumeMatrix(p, q, r, 1, reader);
+		comsumeMatrix(p, q, r, 'm', reader);
 
 		// empty line
 		reader.readLine();
 
-		comsumeMatrix(p, q, r, 2, reader);
+		comsumeMatrix(p, q, r, 'n', reader);
 
 		for (int row = 0; row < p; row++) {
 
@@ -123,14 +123,16 @@ public class MasterTask {
 
 				int workerIndex = (row * r + col) % workers.length;
 
-				MsgStart start = new MsgStart(taskId, q);
+				MsgStart start = new MsgStart();
+				start.setTaskId(taskId);
+				start.setQ(q);
 
 				socket.send(start, workers[workerIndex]);
 			}
 		}
 	}
 
-	private void comsumeMatrix(int p, int q, int r, int matrixNo, BufferedReader reader) throws IOException {
+	private void comsumeMatrix(int p, int q, int r, char matrix, BufferedReader reader) throws IOException {
 
 		for (int row = 0; row < p; row++) {
 
@@ -140,16 +142,16 @@ public class MasterTask {
 
 				// cols of the second matrix when we are the first matrix
 				// rows of the first matrix when we are the second matrix
-				int orderDimSize = (matrixNo == 1 ? r : p);
+				int orderDimSize = (matrix == 'm' ? r : p);
 
 				for (int k = 0; k < orderDimSize; k++) {
 
 					MsgInput input = new MsgInput();
 					input.setTaskId(taskId);
-					input.setSource(matrixNo);
+					input.setMatrix(matrix);
 					input.setValue(Integer.parseInt(tokens[col]));
 
-					if (matrixNo == 1) {
+					if (matrix == 'm') {
 
 						input.setTargetRow(row);
 						input.setTargetCol(k);

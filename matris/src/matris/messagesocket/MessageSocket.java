@@ -110,7 +110,7 @@ public class MessageSocket {
 
 		try {
 
-			DatagramPacket packet = new DatagramPacket(new byte[Message.SIZE], Message.SIZE);
+			DatagramPacket packet = new DatagramPacket(new byte[Message.MESSAGE_SIZE], Message.MESSAGE_SIZE);
 
 			socket.receive(packet);
 
@@ -149,14 +149,14 @@ public class MessageSocket {
 
 			byte[] bytes = Message.toBytes(message);
 
-			if (bytes.length < Message.SIZE) {
+			if (bytes.length < Message.MESSAGE_SIZE) {
 
-				ByteBuffer buffer = ByteBuffer.allocate(Message.SIZE);
+				ByteBuffer buffer = ByteBuffer.allocate(Message.MESSAGE_SIZE);
 				buffer.put(bytes);
 				bytes = buffer.array();
 			}
 
-			packet = new DatagramPacket(bytes, Message.SIZE, address);
+			packet = new DatagramPacket(bytes, Message.MESSAGE_SIZE, address);
 
 		} catch (IOException e) {
 

@@ -23,7 +23,7 @@ public class SlaveTask {
 
 	public void addInput(MsgInput input) {
 
-		if (input.getSource() == 1) {
+		if (input.getMatrix() == 'm') {
 
 			firstMatrixValues.put(input.getOrder(), input.getValue());
 
