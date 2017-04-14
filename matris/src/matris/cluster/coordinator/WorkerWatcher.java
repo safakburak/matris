@@ -1,6 +1,5 @@
-package matris.coordinator;
+package matris.cluster.coordinator;
 
-import java.net.InetSocketAddress;
 import java.util.concurrent.ConcurrentHashMap;
 
 import matris.messages.MsgPing;
@@ -24,19 +23,19 @@ public class WorkerWatcher {
 		}
 	}, "watching thread");
 
-	private ConcurrentHashMap<InetSocketAddress, Boolean> workers;
+	private ConcurrentHashMap<WorkerAddress, Boolean> workers;
 
 	private MessageSocket socket;
 
-	private ConcurrentHashMap<InetSocketAddress, Long> lastPingTimes = new ConcurrentHashMap<>();
+	private ConcurrentHashMap<WorkerAddress, Long> lastPingTimes = new ConcurrentHashMap<>();
 
-	public WorkerWatcher(ConcurrentHashMap<InetSocketAddress, Boolean> workers, MessageSocket socket) {
+	public WorkerWatcher(ConcurrentHashMap<WorkerAddress, Boolean> workers, MessageSocket socket) {
 
 		this.workers = workers;
 		this.socket = socket;
 
 		// reset timers
-		for (InetSocketAddress worker : workers.keySet()) {
+		for (WorkerAddress worker : workers.keySet()) {
 
 			lastPingTimes.put(worker, System.currentTimeMillis());
 		}
@@ -52,9 +51,9 @@ public class WorkerWatcher {
 
 					MsgPing ping = (MsgPing) message;
 
-					InetSocketAddress worker = new InetSocketAddress(message.getSource().getHostName(), ping.getPort());
+					WorkerAddress key = new WorkerAddress(ping.getSrcHost(), ping.getSrcPort());
 
-					lastPingTimes.put(worker, System.currentTimeMillis());
+					lastPingTimes.put(key, System.currentTimeMillis());
 				}
 			}
 		});
@@ -63,12 +62,12 @@ public class WorkerWatcher {
 	private void watch() {
 
 		// ping
-		for (InetSocketAddress worker : workers.keySet()) {
+		for (WorkerAddress worker : workers.keySet()) {
 
 			MsgPing msgPing = new MsgPing();
-			msgPing.setPort(socket.getPort());
+			msgPing.setDestination(worker.getHost(), worker.getPort());
 
-			socket.send(msgPing, worker);
+			socket.send(msgPing, true);
 		}
 
 		try {
@@ -83,7 +82,7 @@ public class WorkerWatcher {
 		// check
 		long limit = System.currentTimeMillis() - THRESHOLD;
 
-		for (InetSocketAddress worker : workers.keySet()) {
+		for (WorkerAddress worker : workers.keySet()) {
 
 			if (lastPingTimes.get(worker) < limit) {
 

@@ -4,12 +4,12 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.concurrent.ConcurrentHashMap;
 
+import matris.cluster.worker.Worker;
 import matris.messages.MsgCancel;
 import matris.messages.MsgInput;
 import matris.messages.MsgStart;
 import matris.messagesocket.Message;
 import matris.messagesocket.MessageSocketListener;
-import matris.worker.Worker;
 
 public class SlaveMultiplier extends Worker implements MessageSocketListener {
 

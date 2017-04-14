@@ -1,6 +1,5 @@
-package matris.worker;
+package matris.cluster.worker;
 
-import java.net.InetAddress;
 import java.net.SocketException;
 
 import matris.messages.MsgPing;
@@ -12,6 +11,8 @@ public class Worker {
 
 	protected MessageSocket socket;
 
+	private boolean pingEnable = true;
+
 	public Worker(int port) throws SocketException {
 
 		socket = new MessageSocket(port);
@@ -19,16 +20,21 @@ public class Worker {
 		socket.addListener(new MessageSocketListener() {
 
 			@Override
-			public void onMessage(Message message, InetAddress from) {
+			public void onMessage(Message message) {
 
-				if (message instanceof MsgPing) {
+				if (pingEnable && message instanceof MsgPing) {
 
 					MsgPing msgPing = (MsgPing) message;
-					msgPing.setPort(socket.getPort());
+					msgPing.setDestination(message.getSrcHost(), message.getSrcPort());
 
-					socket.send(msgPing, from.getHostName(), msgPing.getPort());
+					socket.send(msgPing, true);
 				}
 			}
 		});
+	}
+
+	public void setPingEnable(boolean pingEnable) {
+
+		this.pingEnable = pingEnable;
 	}
 }

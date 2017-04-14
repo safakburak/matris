@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 
-import matris.coordinator.Coordinator;
+import matris.cluster.coordinator.Coordinator;
 
 public class MasterMultiplier extends Coordinator {
 
