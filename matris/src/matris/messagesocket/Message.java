@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class Message implements Serializable {
 
 	// bytes
-	public static final int MESSAGE_SIZE = 64;
+	public static final int MESSAGE_SIZE = 512;
 
 	private static HashMap<Integer, MessageCreator> creators = new HashMap<>();
 
