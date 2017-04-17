@@ -5,6 +5,8 @@ import java.net.SocketException;
 import java.util.concurrent.ConcurrentHashMap;
 
 import matris.cluster.worker.Worker;
+import matris.common.Task;
+import matris.common.TaskListener;
 import matris.ftp.FileReceiver;
 import matris.messages.MsgMapStart;
 import matris.messagesocket.Message;
@@ -13,15 +15,19 @@ import matris.tools.Util;
 
 public class SlaveMain extends Worker implements MessageSocketListener {
 
+	private String name;
+
 	private FileReceiver fileReceiver;
 
 	private File receiveDir;
 
-	private ConcurrentHashMap<MapTask, Boolean> mapTasks = new ConcurrentHashMap<>();
+	private ConcurrentHashMap<File, MapTask> mapTasks = new ConcurrentHashMap<>();
 
 	public SlaveMain(String name, File parentDir, int port) throws SocketException {
 
 		super(port);
+
+		this.name = name;
 
 		socket.addListener(this);
 
@@ -46,84 +52,32 @@ public class SlaveMain extends Worker implements MessageSocketListener {
 
 			MsgMapStart start = (MsgMapStart) message;
 
-			MapTask mapTask = new MapTask(socket, message.getSrcAddress(), start.getTaskId(),
-					fileReceiver.getFile(((MsgMapStart) message).getRemoteFileId()), start.getP(), start.getQ(),
-					start.getR());
+			File file = fileReceiver.getFile(start.getRemoteFileId());
 
-			mapTask.start();
+			MapTask mapTask = new MapTask(socket, message.getSrcAddress(), start.getTaskId(), file, start.getP(),
+					start.getQ(), start.getR(), receiveDir, start.getPartCount());
 
-			mapTasks.put(mapTask, true);
+			MapTask prev = mapTasks.putIfAbsent(file, mapTask);
+
+			if (prev == null) {
+
+				mapTask.addListener(new TaskListener() {
+
+					@Override
+					public void onComplete(Task task, boolean success) {
+
+						MapTask mapTask = (MapTask) task;
+
+						mapTasks.remove(mapTask.getFile());
+
+						System.out.println(name + " completed mapping!");
+					}
+				});
+
+				mapTask.start();
+			}
 		}
 	}
-
-	// private void map() throws IOException {
-	//
-	// // empty line
-	// reader.readLine();
-	//
-	// comsumeMatrix(p, q, r, 'm', reader);
-	//
-	// // empty line
-	// reader.readLine();
-	//
-	// comsumeMatrix(p, q, r, 'n', reader);
-	//
-	// for (int row = 0; row < p; row++) {
-	//
-	// for (int col = 0; col < r; col++) {
-	//
-	// int workerIndex = (row * r + col) % workers.length;
-	//
-	// MsgStart start = new MsgStart();
-	// start.setTaskId(taskId);
-	// start.setQ(q);
-	//
-	// socket.send(start, workers[workerIndex]);
-	// }
-	// }
-	// }
-
-	// private void comsumeMatrix(int p, int q, int r, char matrix,
-	// BufferedReader reader) throws IOException {
-	//
-	// for (int row = 0; row < p; row++) {
-	//
-	// String[] tokens = reader.readLine().split(" ");
-	//
-	// for (int col = 0; col < q; col++) {
-	//
-	// // cols of the second matrix when we are the first matrix
-	// // rows of the first matrix when we are the second matrix
-	// int orderDimSize = (matrix == 'm' ? r : p);
-	//
-	// for (int k = 0; k < orderDimSize; k++) {
-	//
-	// MsgInput input = new MsgInput();
-	// input.setTaskId(taskId);
-	// input.setMatrix(matrix);
-	// input.setValue(Integer.parseInt(tokens[col]));
-	//
-	// if (matrix == 'm') {
-	//
-	// input.setTargetRow(row);
-	// input.setTargetCol(k);
-	// input.setOrder(col);
-	//
-	// } else {
-	//
-	// input.setTargetRow(k);
-	// input.setTargetCol(col);
-	// input.setOrder(row);
-	// }
-	//
-	// int workerIndex = (input.getTargetRow() * r + input.getTargetCol()) %
-	// workers.length;
-	//
-	// socket.send(input, workers[workerIndex]);
-	// }
-	// }
-	// }
-	// }
 
 	public static void main(String[] args) throws SocketException {
 
@@ -133,10 +87,15 @@ public class SlaveMain extends Worker implements MessageSocketListener {
 
 		dir.mkdir();
 
-		SlaveMain slaveMain1 = new SlaveMain("slave1", dir, 10001);
-		SlaveMain slaveMain2 = new SlaveMain("slave2", dir, 10002);
-		SlaveMain slaveMain3 = new SlaveMain("slave3", dir, 10003);
-		SlaveMain slaveMain4 = new SlaveMain("slave4", dir, 10004);
-		SlaveMain slaveMain5 = new SlaveMain("slave5", dir, 10005);
+		new SlaveMain("slave1", dir, 10000);
+		new SlaveMain("slave2", dir, 10001);
+		new SlaveMain("slave3", dir, 10002);
+		new SlaveMain("slave4", dir, 10003);
+		new SlaveMain("slave5", dir, 10004);
+		new SlaveMain("slave6", dir, 10005);
+		new SlaveMain("slave7", dir, 10006);
+		new SlaveMain("slave8", dir, 10007);
+		new SlaveMain("slave9", dir, 10008);
+		new SlaveMain("slave10", dir, 10009);
 	}
 }

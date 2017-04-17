@@ -17,6 +17,8 @@ public class MsgMapStart extends Message {
 
 	private int r;
 
+	private int partCount;
+
 	public MsgMapStart() {
 
 		super(OpCode.mapStart.ordinal());
@@ -72,6 +74,16 @@ public class MsgMapStart extends Message {
 		this.r = r;
 	}
 
+	public int getPartCount() {
+
+		return partCount;
+	}
+
+	public void setPartCount(int partCount) {
+
+		this.partCount = partCount;
+	}
+
 	@Override
 	protected void deserialize(ByteBuffer buffer) {
 
@@ -80,6 +92,7 @@ public class MsgMapStart extends Message {
 		p = buffer.getInt();
 		q = buffer.getInt();
 		r = buffer.getInt();
+		partCount = buffer.getInt();
 	}
 
 	@Override
@@ -90,5 +103,6 @@ public class MsgMapStart extends Message {
 		buffer.putInt(p);
 		buffer.putInt(q);
 		buffer.putInt(r);
+		buffer.putInt(partCount);
 	}
 }

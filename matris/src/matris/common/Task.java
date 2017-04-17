@@ -8,6 +8,8 @@ public abstract class Task {
 
 	private ConcurrentHashMap<TaskListener, Boolean> listeners = new ConcurrentHashMap<>();
 
+	private Boolean completed = false;
+
 	public Task() {
 
 		taskThread = new Thread(new Runnable() {
@@ -36,21 +38,35 @@ public abstract class Task {
 
 	protected void done() {
 
-		for (TaskListener listener : listeners.keySet()) {
+		synchronized (completed) {
 
-			listener.onComplete(Task.this, true);
+			if (completed == false) {
+
+				for (TaskListener listener : listeners.keySet()) {
+
+					listener.onComplete(Task.this, true);
+				}
+
+				clean();
+			}
 		}
-
-		clean();
 	}
 
 	protected void fail() {
 
-		for (TaskListener listener : listeners.keySet()) {
+		synchronized (completed) {
 
-			listener.onComplete(Task.this, false);
+			if (completed == false) {
+
+				for (TaskListener listener : listeners.keySet()) {
+
+					listener.onComplete(Task.this, false);
+				}
+
+				clean();
+
+				completed = true;
+			}
 		}
-
-		clean();
 	}
 }

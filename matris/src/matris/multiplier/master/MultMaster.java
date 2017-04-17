@@ -86,6 +86,7 @@ public class MultMaster implements MessageSocketListener {
 						start.setR(r);
 						start.setAckRequired(true);
 						start.setDestination(cTask.getTo());
+						start.setPartCount(workers.size());
 
 						socket.send(start);
 					}

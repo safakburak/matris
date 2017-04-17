@@ -55,6 +55,6 @@ public class MasterMain extends Coordinator {
 
 	public static void main(String[] args) throws IOException {
 
-		MasterMain masterMain = new MasterMain(1234);
+		new MasterMain(1234);
 	}
 }
