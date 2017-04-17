@@ -91,6 +91,8 @@ public class MultMaster implements MessageSocketListener {
 					}
 				}
 			});
+
+			task.start();
 		}
 	}
 

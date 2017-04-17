@@ -41,7 +41,7 @@ public class MasterMain extends Coordinator {
 
 					try {
 
-						MultMaster task = new MultMaster(taskId++, file, socket, getUpWorkers());
+						MultMaster task = new MultMaster(taskId++, file, socket, getWorkers());
 						tasks.put(task.getTaskId(), task);
 
 					} catch (NumberFormatException | IOException e) {

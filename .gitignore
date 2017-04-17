@@ -2,8 +2,8 @@
 .recommenders/
 .DS_Store
 **/bin/**
-input
-done
-process
-
+matris/input
+matris/done
+matris/process
+matris/slaves
 

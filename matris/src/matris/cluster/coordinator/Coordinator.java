@@ -17,8 +17,7 @@ import matris.tools.Util;
 
 public class Coordinator {
 
-	private static final int THRESHOLD = 1000;
-	private static final int WAIT = 250;
+	private static final int WAIT = 10000;
 
 	private Thread watchingThread = new Thread(new Runnable() {
 
@@ -33,7 +32,9 @@ public class Coordinator {
 
 	protected MessageSocket socket;
 
-	private ConcurrentHashMap<MessageAddress, WorkerState> workerStates = new ConcurrentHashMap<>();
+	private ConcurrentHashMap<MessageAddress, Long> workerPingTimes = new ConcurrentHashMap<>();
+
+	private ConcurrentHashMap<MessageAddress, Boolean> workerStates = new ConcurrentHashMap<>();
 
 	public Coordinator(int port) throws IOException {
 
@@ -48,12 +49,7 @@ public class Coordinator {
 
 					MsgPing ping = (MsgPing) message;
 
-					MessageAddress key = new MessageAddress(ping.getSrcHost(), ping.getSrcPort());
-					WorkerState oldState = workerStates.get(key);
-
-					WorkerState newState = new WorkerState(oldState.isUp(), System.currentTimeMillis());
-
-					workerStates.put(key, newState);
+					workerPingTimes.put(ping.getSrcAddress(), System.currentTimeMillis());
 				}
 			}
 		});
@@ -66,9 +62,10 @@ public class Coordinator {
 
 			String[] tokens = line.split(":");
 
-			WorkerState state = new WorkerState(true, System.currentTimeMillis());
+			MessageAddress address = new MessageAddress(tokens[0], Integer.parseInt(tokens[1]));
 
-			workerStates.put(new MessageAddress(tokens[0], Integer.parseInt(tokens[1])), state);
+			workerStates.put(address, true);
+			workerPingTimes.put(address, System.currentTimeMillis());
 		}
 
 		reader.close();
@@ -92,51 +89,32 @@ public class Coordinator {
 		Util.sleepSilent(WAIT);
 
 		// check
-		long limit = System.currentTimeMillis() - THRESHOLD;
+		long limit = System.currentTimeMillis() - WAIT;
 
-		for (Entry<MessageAddress, WorkerState> entry : workerStates.entrySet()) {
+		for (Entry<MessageAddress, Long> entry : workerPingTimes.entrySet()) {
 
 			MessageAddress key = entry.getKey();
-			WorkerState oldState = entry.getValue();
+			Long lastPingTime = entry.getValue();
 
-			WorkerState newState = new WorkerState(oldState.getLastPingTime() >= limit, oldState.getLastPingTime());
+			boolean oldState = workerStates.get(key);
+			boolean newState = lastPingTime >= limit;
 
 			workerStates.put(key, newState);
 
-			if (oldState.isUp() == false && newState.isUp() == true) {
+			if (oldState == false && newState == true) {
 
 				doOnWorkerUp(key);
 
-			} else if (oldState.isUp() == true && newState.isUp() == false) {
+			} else if (oldState == true && newState == false) {
 
 				doOnWorkerDown(key);
 			}
 		}
 	}
 
-	public List<MessageAddress> getAllWorkers() {
+	public List<MessageAddress> getWorkers() {
 
-		ArrayList<MessageAddress> result = new ArrayList<>();
-
-		for (Entry<MessageAddress, WorkerState> e : workerStates.entrySet()) {
-
-			result.add(e.getKey());
-		}
-
-		return result;
-	}
-
-	public List<MessageAddress> getUpWorkers() {
-
-		ArrayList<MessageAddress> result = new ArrayList<>();
-
-		for (Entry<MessageAddress, WorkerState> e : workerStates.entrySet()) {
-
-			if (e.getValue().isUp() == true) {
-
-				result.add(e.getKey());
-			}
-		}
+		ArrayList<MessageAddress> result = new ArrayList<>(workerStates.keySet());
 
 		return result;
 	}

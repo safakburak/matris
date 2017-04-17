@@ -124,14 +124,7 @@ public class MessageSocket {
 
 			while (outbox.size() >= MAX_OUTBOX) {
 
-				try {
-
-					Thread.sleep(1);
-
-				} catch (InterruptedException e) {
-
-					// nothing to do
-				}
+				Util.sleepSilent(10);
 			}
 
 			outbox.add(message);
@@ -234,11 +227,6 @@ public class MessageSocket {
 
 	private void write() {
 
-		for (MessageAddress address : cancelledAddresses) {
-
-			cancelledAddresses.remove(address);
-		}
-
 		boolean didSomething = false;
 
 		while (urgentOutbox.isEmpty() == false) {
@@ -260,9 +248,9 @@ public class MessageSocket {
 						// nothing to do
 					}
 				}
-			}
 
-			didSomething = true;
+				didSomething = true;
+			}
 		}
 
 		// resend ack waiting messages if enough time passed
@@ -294,9 +282,9 @@ public class MessageSocket {
 					// update retry time
 					entry.getValue().setLastSendTime(time);
 				}
-			}
 
-			didSomething = true;
+				didSomething = true;
+			}
 		}
 
 		Message message = outbox.poll();

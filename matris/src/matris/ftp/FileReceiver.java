@@ -1,34 +1,34 @@
 package matris.ftp;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+import matris.common.Task;
+import matris.common.TaskListener;
 import matris.messages.MsgFilePart;
 import matris.messages.MsgFileReceived;
 import matris.messagesocket.Message;
 import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
 import matris.messagesocket.MessageSocketListener;
-import matris.tools.Util;
 
 public class FileReceiver {
 
 	private MessageSocket socket;
 
-	private File receiveFolder;
+	private File receiveDir;
 
-	private ConcurrentHashMap<Integer, AtomicLong> receivedParts = new ConcurrentHashMap<>();
+	private ConcurrentHashMap<Integer, AtomicLong> receivedPartsCounts = new ConcurrentHashMap<>();
 
 	private ConcurrentHashMap<Integer, File> receivedFiles = new ConcurrentHashMap<>();
 
 	public FileReceiver(MessageSocket socket, File receiveFolder) {
 
 		this.socket = socket;
-		this.receiveFolder = receiveFolder;
+		this.receiveDir = receiveFolder;
 
 		receiveFolder.mkdirs();
 
@@ -54,122 +54,81 @@ public class FileReceiver {
 
 	private void onFilePart(MsgFilePart filePart) {
 
-		receivedParts.putIfAbsent(filePart.getFileId(), new AtomicLong());
+		receivedPartsCounts.putIfAbsent(filePart.getFileId(), new AtomicLong());
 
-		AtomicLong partCounter = receivedParts.get(filePart.getFileId());
+		AtomicLong partCounter = receivedPartsCounts.get(filePart.getFileId());
 
 		synchronized (partCounter) {
 
-			File file = null;
-			FileOutputStream output = null;
+			File partFile = null;
+			FileOutputStream outputStream = null;
 
 			try {
 
 				MessageAddress from = filePart.getSrcAddress();
+
 				String fileName = "file_" + from.getHost() + "_" + from.getPort() + "_" + filePart.getFileId() + "_"
 						+ filePart.getPartIndex();
 
-				file = new File(receiveFolder.getPath() + "/" + fileName);
+				partFile = new File(receiveDir.getPath() + "/" + fileName);
 
-				Util.remove(file);
-				file.createNewFile();
+				File mergedFile = new File(receiveDir.getPath() + "/" + "file_" + from.getHost() + "_" + from.getPort()
+						+ "_" + filePart.getFileId());
 
-				output = new FileOutputStream(file);
+				if (partFile.exists() == false && mergedFile.exists() == false) {
 
-				output.write(filePart.getData());
-				output.flush();
+					partFile.createNewFile();
 
-				long partCount = partCounter.incrementAndGet();
+					outputStream = new FileOutputStream(partFile);
 
-				if (partCount == filePart.getPartCount()) {
+					outputStream.write(filePart.getData());
+					outputStream.flush();
+					outputStream.close();
 
-					receivedParts.remove(partCounter);
+					long partCount = partCounter.incrementAndGet();
 
-					File mergedFile = mergeParts(filePart.getSrcAddress(), filePart.getFileId(),
-							filePart.getPartCount());
+					if (partCount == filePart.getPartCount()) {
 
-					int fileId = mergedFile.getAbsolutePath().hashCode();
+						receivedPartsCounts.remove(partCounter);
 
-					MsgFileReceived fileReceived = new MsgFileReceived();
-					fileReceived.setFileId(filePart.getFileId());
-					fileReceived.setRemoteFileId(fileId);
-					fileReceived.setDestHost(filePart.getSrcHost());
-					fileReceived.setDestPort(filePart.getSrcPort());
-					fileReceived.setAckRequired(true);
+						FileMergeTask mergeTask = new FileMergeTask(filePart.getSrcAddress(), filePart.getFileId(),
+								filePart.getPartCount(), receiveDir);
 
-					socket.send(fileReceived);
+						mergeTask.addListener(new TaskListener() {
+							@Override
+							public void onComplete(Task task, boolean success) {
 
-					receivedFiles.put(fileId, mergedFile);
+								if (success) {
+
+									FileMergeTask mergeTask = (FileMergeTask) task;
+
+									int fileId = mergeTask.getMergedFile().getAbsolutePath().hashCode();
+
+									MsgFileReceived fileReceived = new MsgFileReceived();
+									fileReceived.setFileId(filePart.getFileId());
+									fileReceived.setRemoteFileId(fileId);
+									fileReceived.setDestHost(filePart.getSrcHost());
+									fileReceived.setDestPort(filePart.getSrcPort());
+									fileReceived.setAckRequired(true);
+
+									receivedFiles.put(fileId, mergeTask.getMergedFile());
+
+									socket.send(fileReceived);
+								}
+							}
+						});
+
+						mergeTask.start();
+					}
 				}
 
 			} catch (IOException e) {
 
-				if (file != null) {
+				if (partFile != null) {
 
-					file.delete();
-				}
-
-			} finally {
-
-				if (output != null) {
-
-					try {
-
-						output.close();
-
-					} catch (IOException e) {
-
-						// nothing to do
-					}
+					partFile.delete();
 				}
 			}
 		}
-	}
-
-	private File mergeParts(MessageAddress from, int fileId, long partCount) {
-
-		File mergedFile = null;
-
-		FileOutputStream outputStream;
-
-		try {
-
-			String fileName = "file_" + from.getHost() + "_" + from.getPort() + "_" + fileId;
-
-			mergedFile = new File(receiveFolder.getPath() + "/" + fileName);
-
-			outputStream = new FileOutputStream(mergedFile);
-
-			for (long partIndex = 0; partIndex < partCount; partIndex++) {
-
-				File partFile = new File(mergedFile.getPath() + "_" + partIndex);
-
-				FileInputStream partInput = new FileInputStream(partFile);
-
-				byte[] chunk = new byte[(int) partFile.length()];
-
-				partInput.read(chunk);
-
-				outputStream.write(chunk);
-
-				outputStream.flush();
-
-				partInput.close();
-
-				partFile.delete();
-			}
-
-			outputStream.close();
-
-		} catch (IOException e) {
-
-			// nothing to do
-			if (mergedFile != null) {
-
-				mergedFile.delete();
-			}
-		}
-
-		return mergedFile;
 	}
 }
