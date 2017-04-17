@@ -54,8 +54,8 @@ public class SlaveMain extends Worker implements MessageSocketListener {
 
 			File file = fileReceiver.getFile(start.getRemoteFileId());
 
-			MapTask mapTask = new MapTask(socket, message.getSrcAddress(), start.getTaskId(), file, start.getP(),
-					start.getQ(), start.getR(), receiveDir, start.getPartCount());
+			MapTask mapTask = new MapTask(socket, message.getSrcAddress(), start.getTaskId(), start.getPartNo(), file,
+					start.getP(), start.getQ(), start.getR(), receiveDir, start.getPartCount());
 
 			MapTask prev = mapTasks.putIfAbsent(file, mapTask);
 

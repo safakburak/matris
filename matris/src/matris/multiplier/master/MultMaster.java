@@ -68,7 +68,7 @@ public class MultMaster implements MessageSocketListener {
 
 			MessageAddress addr = workers.get(i % workers.size());
 
-			FileSendTask task = new FileSendTask(socket, part.getPath().hashCode(), inputParts.get(i), addr);
+			FileSendTask task = new FileSendTask(socket, part.getPath().hashCode(), inputParts.get(i), addr, i);
 
 			task.addListener(new TaskListener() {
 				@Override
@@ -87,6 +87,7 @@ public class MultMaster implements MessageSocketListener {
 						start.setAckRequired(true);
 						start.setDestination(cTask.getTo());
 						start.setPartCount(workers.size());
+						start.setPartNo(cTask.getPartNo());
 
 						socket.send(start);
 					}

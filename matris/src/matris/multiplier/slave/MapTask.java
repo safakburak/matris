@@ -30,8 +30,10 @@ public class MapTask extends Task {
 
 	private FileWriter[] writers;
 
-	public MapTask(MessageSocket socket, MessageAddress owner, int taskId, File file, int p, int q, int r, File rootDir,
-			int partCount) {
+	private int partNo;
+
+	public MapTask(MessageSocket socket, MessageAddress owner, int taskId, int partNo, File file, int p, int q, int r,
+			File rootDir, int partCount) {
 
 		this.socket = socket;
 		this.owner = owner;
@@ -41,6 +43,7 @@ public class MapTask extends Task {
 		this.q = q;
 		this.r = r;
 		this.partCount = partCount;
+		this.partNo = partNo;
 	}
 
 	public File getFile() {
@@ -51,6 +54,11 @@ public class MapTask extends Task {
 	public int getTaskId() {
 
 		return taskId;
+	}
+
+	public int getPartNo() {
+
+		return partNo;
 	}
 
 	@Override

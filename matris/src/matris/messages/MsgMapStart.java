@@ -9,6 +9,8 @@ public class MsgMapStart extends Message {
 
 	private int taskId;
 
+	private int partNo;
+
 	private int remoteFileId;
 
 	private int p;
@@ -84,6 +86,16 @@ public class MsgMapStart extends Message {
 		this.partCount = partCount;
 	}
 
+	public int getPartNo() {
+
+		return partNo;
+	}
+
+	public void setPartNo(int partNo) {
+
+		this.partNo = partNo;
+	}
+
 	@Override
 	protected void deserialize(ByteBuffer buffer) {
 
@@ -93,6 +105,7 @@ public class MsgMapStart extends Message {
 		q = buffer.getInt();
 		r = buffer.getInt();
 		partCount = buffer.getInt();
+		partNo = buffer.getInt();
 	}
 
 	@Override
@@ -104,5 +117,6 @@ public class MsgMapStart extends Message {
 		buffer.putInt(q);
 		buffer.putInt(r);
 		buffer.putInt(partCount);
+		buffer.putInt(partNo);
 	}
 }
