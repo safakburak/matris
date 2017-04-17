@@ -2,27 +2,16 @@ package matris.messagesocket;
 
 import java.nio.ByteBuffer;
 
+import matris.messages.OpCode;
+
 @SuppressWarnings("serial")
 public class TestMessage extends Message {
-
-	private static int OPCODE = 1000;
-
-	static {
-		Message.registerMessageType(OPCODE, new MessageCreator() {
-
-			@Override
-			public Message createMessage() {
-
-				return new TestMessage();
-			}
-		});
-	}
 
 	private long time;
 
 	public TestMessage() {
 
-		super(OPCODE);
+		super(OpCode.test.ordinal());
 
 		time = System.currentTimeMillis();
 	}

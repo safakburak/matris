@@ -1,8 +1,10 @@
 package matris.cluster.coordinator;
 
+import matris.messagesocket.MessageAddress;
+
 public interface WorkerListener {
 
-	void onWorkerDown(WorkerAddress address);
+	void onWorkerDown(MessageAddress address);
 
-	void onWorkerUp(WorkerAddress address);
+	void onWorkerUp(MessageAddress address);
 }

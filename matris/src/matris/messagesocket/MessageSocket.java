@@ -8,13 +8,14 @@ import java.net.SocketException;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 import matris.messages.MsgAck;
 import matris.tools.Util;
 
 public class MessageSocket {
 
-	private static final int MAX_ACK_WAITING = 1024;
+	private static final int MAX_OUTBOX = 1024;
 
 	private static final long RETRY_PERIOD = 100;
 
@@ -63,6 +64,8 @@ public class MessageSocket {
 
 	private ConcurrentHashMap<Integer, Message> ackWaitingMessages = new ConcurrentHashMap<>();
 
+	private ConcurrentSkipListSet<MessageAddress> cancelledAddresses = new ConcurrentSkipListSet<>();
+
 	private int port;
 
 	private boolean started = false;
@@ -101,6 +104,11 @@ public class MessageSocket {
 		listeners.putIfAbsent(listener, true);
 	}
 
+	public void removeListener(MessageSocketListener listener) {
+
+		listeners.remove(listener);
+	}
+
 	public void send(Message message) {
 
 		send(message, false);
@@ -114,14 +122,11 @@ public class MessageSocket {
 
 		} else {
 
-			// if waiting for too many acks
-			// block sender before allowing new
-
-			while (ackWaitingMessages.size() >= MAX_ACK_WAITING) {
+			while (outbox.size() >= MAX_OUTBOX) {
 
 				try {
 
-					Thread.sleep(10);
+					Thread.sleep(1);
 
 				} catch (InterruptedException e) {
 
@@ -155,7 +160,8 @@ public class MessageSocket {
 				if (message.isAckRequired()) {
 
 					MsgAck msgAck = new MsgAck();
-					msgAck.setDestination(message.getSrcHost(), message.getSrcPort());
+					msgAck.setDestHost(message.getSrcHost());
+					msgAck.setDestPort(message.getSrcPort());
 					msgAck.setMessageIdToAck(message.getMessageId());
 
 					urgentOutbox.add(msgAck);
@@ -228,6 +234,11 @@ public class MessageSocket {
 
 	private void write() {
 
+		for (MessageAddress address : cancelledAddresses) {
+
+			cancelledAddresses.remove(address);
+		}
+
 		boolean didSomething = false;
 
 		while (urgentOutbox.isEmpty() == false) {
@@ -236,13 +247,18 @@ public class MessageSocket {
 
 			if (message != null) {
 
-				try {
+				MessageAddress to = new MessageAddress(message.getDestHost(), message.getDestPort());
 
-					socket.send(pack(message));
+				if (cancelledAddresses.contains(to) == false) {
 
-				} catch (IOException e) {
+					try {
 
-					// nothing to do
+						socket.send(pack(message));
+
+					} catch (IOException e) {
+
+						// nothing to do
+					}
 				}
 			}
 
@@ -258,17 +274,26 @@ public class MessageSocket {
 
 			if (entry.getValue().getLastSendTime() < threshold) {
 
-				try {
+				MessageAddress to = new MessageAddress(entry.getValue().getDestHost(), entry.getValue().getDestPort());
 
-					socket.send(pack(entry.getValue()));
+				if (cancelledAddresses.contains(to)) {
 
-				} catch (IOException e) {
+					ackWaitingMessages.remove(entry.getKey());
 
-					// nothing to do
+				} else {
+
+					try {
+
+						socket.send(pack(entry.getValue()));
+
+					} catch (IOException e) {
+
+						// nothing to do
+					}
+
+					// update retry time
+					entry.getValue().setLastSendTime(time);
 				}
-
-				// update retry time
-				entry.getValue().setLastSendTime(time);
 			}
 
 			didSomething = true;
@@ -278,21 +303,26 @@ public class MessageSocket {
 
 		if (message != null) {
 
-			try {
+			MessageAddress to = new MessageAddress(message.getDestHost(), message.getDestPort());
 
-				socket.send(pack(message));
+			if (cancelledAddresses.contains(to) == false) {
 
-			} catch (IOException e) {
+				try {
 
-				// nothing to do
-			}
+					socket.send(pack(message));
 
-			// sent or not add to list for retry when necessary
-			if (message.isAckRequired()) {
+				} catch (IOException e) {
 
-				message.setLastSendTime(System.currentTimeMillis());
+					// nothing to do
+				}
 
-				ackWaitingMessages.put(message.getMessageId(), message);
+				// sent or not add to list for retry when necessary
+				if (message.isAckRequired()) {
+
+					message.setLastSendTime(System.currentTimeMillis());
+
+					ackWaitingMessages.put(message.getMessageId(), message);
+				}
 			}
 
 			didSomething = true;
@@ -307,5 +337,10 @@ public class MessageSocket {
 	public int getPort() {
 
 		return port;
+	}
+
+	public void cancelAddress(MessageAddress address) {
+
+		cancelledAddresses.add(address);
 	}
 }

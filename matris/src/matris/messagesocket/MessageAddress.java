@@ -6,24 +6,20 @@ public class MessageAddress {
 
 	private int port;
 
+	public MessageAddress(String host, int port) {
+
+		this.host = host;
+		this.port = port;
+	}
+
 	public String getHost() {
 
 		return host;
 	}
 
-	public void setHost(String host) {
-
-		this.host = host;
-	}
-
 	public int getPort() {
 
 		return port;
-	}
-
-	public void setPort(int port) {
-
-		this.port = port;
 	}
 
 	@Override
@@ -52,5 +48,11 @@ public class MessageAddress {
 		if (port != other.port)
 			return false;
 		return true;
+	}
+
+	@Override
+	public String toString() {
+
+		return host + ":" + port;
 	}
 }

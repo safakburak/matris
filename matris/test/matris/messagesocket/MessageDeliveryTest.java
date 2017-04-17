@@ -52,8 +52,8 @@ public class MessageDeliveryTest {
 		socket1Sent = ((TestMessage) message1).getTime();
 		socket2Sent = ((TestMessage) message2).getTime();
 
-		message1.setDestination("localhost", 4321);
-		message2.setDestination("localhost", 1234);
+		message1.setDestination(new MessageAddress("localhost", 4321));
+		message2.setDestination(new MessageAddress("localhost", 1234));
 
 		socket1.send(message1);
 		socket2.send(message2);

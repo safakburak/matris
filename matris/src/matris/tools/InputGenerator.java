@@ -6,19 +6,15 @@ import java.io.IOException;
 
 public class InputGenerator {
 
-	private static void writeMatrix(int rows, int cols, FileWriter writer) throws IOException {
+	private static void writeMatrix(char matrix, int rows, int cols, FileWriter writer) throws IOException {
 
 		for (int row = 0; row < rows; row++) {
 
 			for (int col = 0; col < cols; col++) {
 
-				writer.write((int) (Math.random() * 10) + " ");
+				writer.write(matrix + " " + row + " " + col + " " + (int) (Math.random() * 10) + "\n");
 			}
-
-			writer.write("\n");
 		}
-
-		writer.write("\n");
 	}
 
 	public static void main(String[] args) throws IOException {
@@ -45,10 +41,9 @@ public class InputGenerator {
 		writer.write(p + "\n");
 		writer.write(q + "\n");
 		writer.write(r + "\n");
-		writer.write("\n");
 
-		writeMatrix(p, q, writer);
-		writeMatrix(q, r, writer);
+		writeMatrix('m', p, q, writer);
+		writeMatrix('n', q, r, writer);
 
 		writer.flush();
 		writer.close();

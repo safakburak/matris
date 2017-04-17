@@ -3,16 +3,15 @@ package matris.messagesocket;
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import matris.messages.OpCode;
 
 @SuppressWarnings("serial")
 public abstract class Message implements Serializable {
 
 	// bytes
 	public static final int MESSAGE_SIZE = 512;
-
-	private static HashMap<Integer, MessageCreator> creators = new HashMap<>();
 
 	private static AtomicInteger nextId = new AtomicInteger();
 
@@ -26,7 +25,7 @@ public abstract class Message implements Serializable {
 
 	private int srcPort;
 
-	private int opCode;
+	private int messageCode;
 
 	private byte ackRequired;
 
@@ -34,7 +33,7 @@ public abstract class Message implements Serializable {
 
 	public Message(int opCode) {
 
-		this.opCode = opCode;
+		this.messageCode = opCode;
 		this.messageId = nextId.incrementAndGet();
 
 		// dont push this far :D
@@ -71,10 +70,10 @@ public abstract class Message implements Serializable {
 		this.destPort = destPort;
 	}
 
-	public void setDestination(String destHost, int destPort) {
+	public void setDestination(MessageAddress address) {
 
-		this.destHost = destHost;
-		this.destPort = destPort;
+		this.destHost = address.getHost();
+		this.destPort = address.getPort();
 	}
 
 	public String getSrcHost() {
@@ -97,9 +96,14 @@ public abstract class Message implements Serializable {
 		this.srcPort = srcPort;
 	}
 
+	public MessageAddress getSrcAddress() {
+
+		return new MessageAddress(srcHost, srcPort);
+	}
+
 	public int getOpCode() {
 
-		return opCode;
+		return messageCode;
 	}
 
 	public boolean isAckRequired() {
@@ -131,7 +135,7 @@ public abstract class Message implements Serializable {
 		byte[] result = new byte[MESSAGE_SIZE];
 
 		ByteBuffer buffer = ByteBuffer.wrap(result);
-		buffer.putInt(message.opCode);
+		buffer.putInt(message.messageCode);
 		buffer.putInt(message.srcPort);
 		buffer.put(message.ackRequired);
 		buffer.putInt(message.messageId);
@@ -147,34 +151,23 @@ public abstract class Message implements Serializable {
 
 		int opCode = buffer.getInt();
 
-		MessageCreator creator = creators.get(opCode);
+		try {
 
-		if (creator == null) {
+			OpCode messageCode = OpCode.values()[opCode];
 
-			throw new AssertionError("Unknown OpCode: " + opCode);
+			Message result = messageCode.getMessageType().newInstance();
+
+			result.srcPort = buffer.getInt();
+			result.ackRequired = buffer.get();
+			result.messageId = buffer.getInt();
+
+			result.deserialize(buffer);
+
+			return result;
+
+		} catch (Exception e) {
+
+			throw new AssertionError("Cannot instanciate for op code: " + opCode);
 		}
-
-		Message result = creator.createMessage();
-
-		result.srcPort = buffer.getInt();
-		result.ackRequired = buffer.get();
-		result.messageId = buffer.getInt();
-
-		result.deserialize(buffer);
-
-		return result;
-	}
-
-	/*
-	 * For performance concerns, to avoid reflection.
-	 */
-	public static void registerMessageType(int opCode, MessageCreator creator) {
-
-		if (creators.containsKey(opCode)) {
-
-			throw new AssertionError("OpCode :" + opCode + " is used multiple times!");
-		}
-
-		creators.put(opCode, creator);
 	}
 }

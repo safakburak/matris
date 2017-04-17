@@ -3,26 +3,11 @@ package matris.messages;
 import java.nio.ByteBuffer;
 
 import matris.messagesocket.Message;
-import matris.messagesocket.MessageCreator;
 
 @SuppressWarnings("serial")
 public class MsgFilePart extends Message {
 
 	public static final int CHUNK_SIZE = Message.MESSAGE_SIZE - 64;
-
-	static {
-
-		Message.registerMessageType(OpCode.filePart.ordinal(), new MessageCreator() {
-
-			@Override
-			public Message createMessage() {
-
-				return new MsgFilePart();
-			}
-		});
-	}
-
-	private int taskId;
 
 	private int fileId;
 
@@ -37,16 +22,6 @@ public class MsgFilePart extends Message {
 	public MsgFilePart() {
 
 		super(OpCode.filePart.ordinal());
-	}
-
-	public int getTaskId() {
-
-		return taskId;
-	}
-
-	public void setTaskId(int taskId) {
-
-		this.taskId = taskId;
 	}
 
 	public int getFileId() {
@@ -100,25 +75,23 @@ public class MsgFilePart extends Message {
 	}
 
 	@Override
-	protected void serialize(ByteBuffer buffer) {
-
-		buffer.putInt(taskId);
-		buffer.putInt(fileId);
-		buffer.putLong(partIndex);
-		buffer.putLong(partCount);
-		buffer.putInt(size);
-		buffer.put(data);
-	}
-
-	@Override
 	protected void deserialize(ByteBuffer buffer) {
 
-		taskId = buffer.getInt();
 		fileId = buffer.getInt();
 		partIndex = buffer.getLong();
 		partCount = buffer.getLong();
 		size = buffer.getInt();
 		data = new byte[size];
 		buffer.get(data);
+	}
+
+	@Override
+	protected void serialize(ByteBuffer buffer) {
+
+		buffer.putInt(fileId);
+		buffer.putLong(partIndex);
+		buffer.putLong(partCount);
+		buffer.putInt(size);
+		buffer.put(data);
 	}
 }

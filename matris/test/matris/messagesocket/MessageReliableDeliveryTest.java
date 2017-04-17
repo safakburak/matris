@@ -20,7 +20,7 @@ public class MessageReliableDeliveryTest {
 		sender = new MessageSocket(1234);
 
 		TestMessage message = new TestMessage();
-		message.setDestination("localhost", 4321);
+		message.setDestination(new MessageAddress("localhost", 4321));
 		message.setAckRequired(true);
 
 		sender.send(message);

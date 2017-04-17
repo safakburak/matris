@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import matris.messages.MsgPing;
 import matris.messagesocket.Message;
+import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
 import matris.messagesocket.MessageSocketListener;
 import matris.tools.Util;
@@ -32,7 +33,7 @@ public class Coordinator {
 
 	protected MessageSocket socket;
 
-	private ConcurrentHashMap<WorkerAddress, WorkerState> workerStates = new ConcurrentHashMap<>();
+	private ConcurrentHashMap<MessageAddress, WorkerState> workerStates = new ConcurrentHashMap<>();
 
 	public Coordinator(int port) throws IOException {
 
@@ -47,7 +48,7 @@ public class Coordinator {
 
 					MsgPing ping = (MsgPing) message;
 
-					WorkerAddress key = new WorkerAddress(ping.getSrcHost(), ping.getSrcPort());
+					MessageAddress key = new MessageAddress(ping.getSrcHost(), ping.getSrcPort());
 					WorkerState oldState = workerStates.get(key);
 
 					WorkerState newState = new WorkerState(oldState.isUp(), System.currentTimeMillis());
@@ -67,7 +68,7 @@ public class Coordinator {
 
 			WorkerState state = new WorkerState(true, System.currentTimeMillis());
 
-			workerStates.put(new WorkerAddress(tokens[0], Integer.parseInt(tokens[1])), state);
+			workerStates.put(new MessageAddress(tokens[0], Integer.parseInt(tokens[1])), state);
 		}
 
 		reader.close();
@@ -80,10 +81,10 @@ public class Coordinator {
 	private void watch() {
 
 		// ping
-		for (WorkerAddress worker : workerStates.keySet()) {
+		for (MessageAddress worker : workerStates.keySet()) {
 
 			MsgPing msgPing = new MsgPing();
-			msgPing.setDestination(worker.getHost(), worker.getPort());
+			msgPing.setDestination(worker);
 
 			socket.send(msgPing, true);
 		}
@@ -93,9 +94,9 @@ public class Coordinator {
 		// check
 		long limit = System.currentTimeMillis() - THRESHOLD;
 
-		for (Entry<WorkerAddress, WorkerState> entry : workerStates.entrySet()) {
+		for (Entry<MessageAddress, WorkerState> entry : workerStates.entrySet()) {
 
-			WorkerAddress key = entry.getKey();
+			MessageAddress key = entry.getKey();
 			WorkerState oldState = entry.getValue();
 
 			WorkerState newState = new WorkerState(oldState.getLastPingTime() >= limit, oldState.getLastPingTime());
@@ -113,11 +114,11 @@ public class Coordinator {
 		}
 	}
 
-	public List<WorkerAddress> getAllWorkers() {
+	public List<MessageAddress> getAllWorkers() {
 
-		ArrayList<WorkerAddress> result = new ArrayList<>();
+		ArrayList<MessageAddress> result = new ArrayList<>();
 
-		for (Entry<WorkerAddress, WorkerState> e : workerStates.entrySet()) {
+		for (Entry<MessageAddress, WorkerState> e : workerStates.entrySet()) {
 
 			result.add(e.getKey());
 		}
@@ -125,11 +126,11 @@ public class Coordinator {
 		return result;
 	}
 
-	public List<WorkerAddress> getUpWorkers() {
+	public List<MessageAddress> getUpWorkers() {
 
-		ArrayList<WorkerAddress> result = new ArrayList<>();
+		ArrayList<MessageAddress> result = new ArrayList<>();
 
-		for (Entry<WorkerAddress, WorkerState> e : workerStates.entrySet()) {
+		for (Entry<MessageAddress, WorkerState> e : workerStates.entrySet()) {
 
 			if (e.getValue().isUp() == true) {
 
@@ -140,25 +141,25 @@ public class Coordinator {
 		return result;
 	}
 
-	private void doOnWorkerDown(WorkerAddress address) {
+	private void doOnWorkerDown(MessageAddress address) {
 
 		System.out.println(address + " is DOWN!");
 
 		onWorkerDown(address);
 	}
 
-	protected void onWorkerDown(WorkerAddress address) {
+	protected void onWorkerDown(MessageAddress address) {
 
 	}
 
-	private void doOnWorkerUp(WorkerAddress address) {
+	private void doOnWorkerUp(MessageAddress address) {
 
 		System.out.println(address + " is UP!");
 
 		onWorkerUp(address);
 	}
 
-	protected void onWorkerUp(WorkerAddress address) {
+	protected void onWorkerUp(MessageAddress address) {
 
 	}
 }

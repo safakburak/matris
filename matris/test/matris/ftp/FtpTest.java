@@ -11,10 +11,15 @@ import java.nio.file.Paths;
 
 import org.junit.Test;
 
+import matris.common.Task;
+import matris.common.TaskListener;
+import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
 import matris.tools.Util;
 
 public class FtpTest {
+
+	private int remoteFileId;
 
 	private boolean completed = false;
 
@@ -42,41 +47,30 @@ public class FtpTest {
 		outputStream.flush();
 		outputStream.close();
 
-		FileTransfer sender = new FileTransfer(senderSocket, outputDir, new FileTransferListener() {
+		FileReceiver receiver = new FileReceiver(receiverSocket, outputDir);
+
+		FileSendTask sendTask = new FileSendTask(senderSocket, inputFile.getAbsolutePath().hashCode(), inputFile,
+				new MessageAddress("localhost", 4321));
+
+		sendTask.addListener(new TaskListener() {
 
 			@Override
-			public void fileSendCompleted(int fileId, boolean success) {
+			public void onComplete(Task task, boolean success) {
 
-			}
-
-			@Override
-			public void fileReceiveCompleted(int taskId, int fileId, File file) {
-
-			}
-		});
-
-		FileTransfer receiver = new FileTransfer(receiverSocket, outputDir, new FileTransferListener() {
-
-			@Override
-			public void fileSendCompleted(int fileId, boolean success) {
-
-			}
-
-			@Override
-			public void fileReceiveCompleted(int taskId, int fileId, File file) {
+				remoteFileId = ((FileSendTask) task).getRemoteFileId();
 
 				completed = true;
 			}
 		});
 
-		sender.sendFile(1, 2, inputFile, "localhost", 4321);
+		sendTask.start();
 
 		while (completed == false) {
 
 			Util.sleepSilent(100);
 		}
 
-		File outputFile = new File(outputDir.getPath() + "/file_1_2");
+		File outputFile = receiver.getFile(remoteFileId);
 
 		assertEquals(outputFile.length(), 8192);
 
@@ -99,7 +93,7 @@ public class FtpTest {
 			Files.deleteIfExists(Paths.get(f.getPath()));
 		}
 
-		Files.deleteIfExists(inputDir.toPath());
-		Files.deleteIfExists(outputDir.toPath());
+		Util.remove(inputDir);
+		Util.remove(outputDir);
 	}
 }

@@ -10,8 +10,8 @@ import javax.swing.JOptionPane;
 import org.junit.Test;
 
 import matris.cluster.coordinator.Coordinator;
-import matris.cluster.coordinator.WorkerAddress;
 import matris.cluster.worker.Worker;
+import matris.messagesocket.MessageAddress;
 import matris.tools.Util;
 
 public class CoordinatorTest {
@@ -32,7 +32,7 @@ public class CoordinatorTest {
 
 		JOptionPane.showMessageDialog(null, "Bütün workerları ayağa kaldırıyorum!");
 
-		for (WorkerAddress address : coordinator.getAllWorkers()) {
+		for (MessageAddress address : coordinator.getAllWorkers()) {
 
 			Worker worker = new Worker(address.getPort());
 
@@ -46,8 +46,8 @@ public class CoordinatorTest {
 
 		JOptionPane.showMessageDialog(null, "2 tane workeri durduruyorum!");
 
-		workers.get(5).setPingEnable(false);
-		workers.get(8).setPingEnable(false);
+		workers.get(1).setPingEnable(false);
+		workers.get(3).setPingEnable(false);
 
 		Util.sleepSilent(1000);
 
@@ -56,8 +56,8 @@ public class CoordinatorTest {
 
 		JOptionPane.showMessageDialog(null, "Bütün workerları ayağa kaldırıyorum!");
 
-		workers.get(5).setPingEnable(true);
-		workers.get(8).setPingEnable(true);
+		workers.get(1).setPingEnable(true);
+		workers.get(3).setPingEnable(true);
 
 		Util.sleepSilent(1000);
 
