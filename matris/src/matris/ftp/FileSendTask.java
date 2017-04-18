@@ -24,15 +24,12 @@ public class FileSendTask extends Task implements MessageSocketListener {
 
 	private int remoteFileId;
 
-	private int partNo;
-
-	public FileSendTask(MessageSocket socket, int fileId, File file, MessageAddress to, int partNo) {
+	public FileSendTask(MessageSocket socket, int fileId, File file, MessageAddress to) {
 
 		this.socket = socket;
 		this.fileId = fileId;
 		this.file = file;
 		this.to = to;
-		this.partNo = partNo;
 
 		this.socket.addListener(this);
 	}
@@ -50,11 +47,6 @@ public class FileSendTask extends Task implements MessageSocketListener {
 	public int getRemoteFileId() {
 
 		return remoteFileId;
-	}
-
-	public int getPartNo() {
-
-		return partNo;
 	}
 
 	@Override
