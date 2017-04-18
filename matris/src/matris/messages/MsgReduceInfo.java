@@ -5,25 +5,13 @@ import java.nio.ByteBuffer;
 import matris.messagesocket.Message;
 
 @SuppressWarnings("serial")
-public class MsgFileReceived extends Message {
-
-	private int fileId;
+public class MsgReduceInfo extends Message {
 
 	private int remoteFileId;
 
-	public MsgFileReceived() {
+	public MsgReduceInfo() {
 
-		super(OpCode.fileReceived.ordinal());
-	}
-
-	public int getFileId() {
-
-		return fileId;
-	}
-
-	public void setFileId(int fileId) {
-
-		this.fileId = fileId;
+		super(OpCode.reduceInfo.ordinal());
 	}
 
 	public int getRemoteFileId() {
@@ -31,22 +19,20 @@ public class MsgFileReceived extends Message {
 		return remoteFileId;
 	}
 
-	public void setRemoteFileId(int remoteId) {
+	public void setRemoteFileId(int remoteFileId) {
 
-		this.remoteFileId = remoteId;
+		this.remoteFileId = remoteFileId;
 	}
 
 	@Override
 	protected void serialize(ByteBuffer buffer) {
 
-		buffer.putInt(fileId);
 		buffer.putInt(remoteFileId);
 	}
 
 	@Override
 	protected void deserialize(ByteBuffer buffer) {
 
-		fileId = buffer.getInt();
 		remoteFileId = buffer.getInt();
 	}
 }

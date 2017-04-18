@@ -8,7 +8,7 @@ import matris.cluster.worker.Worker;
 import matris.common.Task;
 import matris.common.TaskListener;
 import matris.ftp.FileReceiver;
-import matris.messages.MsgMapStart;
+import matris.messages.MsgMapInfo;
 import matris.messagesocket.Message;
 import matris.messagesocket.MessageSocketListener;
 import matris.tools.Util;
@@ -50,15 +50,15 @@ public class SlaveMain extends Worker implements MessageSocketListener {
 	@Override
 	public void onMessage(Message message) {
 
-		if (message instanceof MsgMapStart) {
+		if (message instanceof MsgMapInfo) {
 
-			MsgMapStart start = (MsgMapStart) message;
+			MsgMapInfo start = (MsgMapInfo) message;
 
 			File inputFile = fileReceiver.getFile(start.getRemoteInputPartId());
 			File hostsFile = fileReceiver.getFile(start.getRemoteHostsFileId());
 
 			MapTask mapTask = new MapTask(socket, message.getSrcAddress(), start.getTaskId(), inputFile, hostsFile,
-					start.getP(), start.getQ(), start.getR(), rootDir);
+					start.getP(), start.getQ(), start.getR(), rootDir, start.getPartNo());
 
 			MapTask prev = mapTasks.putIfAbsent(inputFile, mapTask);
 

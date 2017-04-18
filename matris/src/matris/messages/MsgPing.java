@@ -13,12 +13,12 @@ public class MsgPing extends Message {
 	}
 
 	@Override
-	protected void deserialize(ByteBuffer buffer) {
+	protected void serialize(ByteBuffer buffer) {
 
 	}
 
 	@Override
-	protected void serialize(ByteBuffer buffer) {
+	protected void deserialize(ByteBuffer buffer) {
 
 	}
 }

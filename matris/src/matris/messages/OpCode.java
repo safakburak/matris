@@ -5,8 +5,8 @@ import matris.messagesocket.TestMessage;
 
 public enum OpCode {
 
-	ack(MsgAck.class), ping(MsgPing.class), filePart(MsgFilePart.class), mapStart(MsgMapStart.class), fileReceived(
-			MsgFileReceived.class), test(TestMessage.class);
+	ack(MsgAck.class), ping(MsgPing.class), filePart(MsgFilePart.class), mapStart(MsgMapInfo.class), fileReceived(
+			MsgFileReceived.class), test(TestMessage.class), reduceInfo(MsgReduceInfo.class);
 
 	private Class<? extends Message> messageType;
 

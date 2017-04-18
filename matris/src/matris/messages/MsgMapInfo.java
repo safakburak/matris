@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 import matris.messagesocket.Message;
 
 @SuppressWarnings("serial")
-public class MsgMapStart extends Message {
+public class MsgMapInfo extends Message {
 
 	private int taskId;
 
@@ -19,7 +19,9 @@ public class MsgMapStart extends Message {
 
 	private int r;
 
-	public MsgMapStart() {
+	private int partNo;
+
+	public MsgMapInfo() {
 
 		super(OpCode.mapStart.ordinal());
 	}
@@ -84,15 +86,14 @@ public class MsgMapStart extends Message {
 		this.r = r;
 	}
 
-	@Override
-	protected void deserialize(ByteBuffer buffer) {
+	public int getPartNo() {
 
-		taskId = buffer.getInt();
-		remoteInputPartId = buffer.getInt();
-		remoteHostsFileId = buffer.getInt();
-		p = buffer.getInt();
-		q = buffer.getInt();
-		r = buffer.getInt();
+		return partNo;
+	}
+
+	public void setPartNo(int partNo) {
+
+		this.partNo = partNo;
 	}
 
 	@Override
@@ -104,5 +105,18 @@ public class MsgMapStart extends Message {
 		buffer.putInt(p);
 		buffer.putInt(q);
 		buffer.putInt(r);
+		buffer.putInt(partNo);
+	}
+
+	@Override
+	protected void deserialize(ByteBuffer buffer) {
+
+		taskId = buffer.getInt();
+		remoteInputPartId = buffer.getInt();
+		remoteHostsFileId = buffer.getInt();
+		p = buffer.getInt();
+		q = buffer.getInt();
+		r = buffer.getInt();
+		partNo = buffer.getInt();
 	}
 }

@@ -25,14 +25,14 @@ public class MsgAck extends Message {
 	}
 
 	@Override
-	protected void deserialize(ByteBuffer buffer) {
-
-		messageIdToAck = buffer.getInt();
-	}
-
-	@Override
 	protected void serialize(ByteBuffer buffer) {
 
 		buffer.putInt(messageIdToAck);
+	}
+
+	@Override
+	protected void deserialize(ByteBuffer buffer) {
+
+		messageIdToAck = buffer.getInt();
 	}
 }

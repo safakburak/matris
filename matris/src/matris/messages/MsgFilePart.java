@@ -75,6 +75,16 @@ public class MsgFilePart extends Message {
 	}
 
 	@Override
+	protected void serialize(ByteBuffer buffer) {
+
+		buffer.putInt(fileId);
+		buffer.putLong(partIndex);
+		buffer.putLong(partCount);
+		buffer.putInt(size);
+		buffer.put(data);
+	}
+
+	@Override
 	protected void deserialize(ByteBuffer buffer) {
 
 		fileId = buffer.getInt();
@@ -83,15 +93,5 @@ public class MsgFilePart extends Message {
 		size = buffer.getInt();
 		data = new byte[size];
 		buffer.get(data);
-	}
-
-	@Override
-	protected void serialize(ByteBuffer buffer) {
-
-		buffer.putInt(fileId);
-		buffer.putLong(partIndex);
-		buffer.putLong(partCount);
-		buffer.putInt(size);
-		buffer.put(data);
 	}
 }

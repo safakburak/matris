@@ -37,8 +37,10 @@ public class MapTask extends Task {
 
 	private MessageAddress[] hosts;
 
+	private int partNo;
+
 	public MapTask(MessageSocket socket, MessageAddress owner, int taskId, File inputFile, File hostsFile, int p, int q,
-			int r, File rootDir) {
+			int r, File rootDir, int partNo) {
 
 		this.socket = socket;
 		this.owner = owner;
@@ -49,6 +51,7 @@ public class MapTask extends Task {
 		this.q = q;
 		this.r = r;
 		this.rootDir = rootDir;
+		this.partNo = partNo;
 	}
 
 	public File getFile() {
@@ -71,49 +74,7 @@ public class MapTask extends Task {
 
 			hosts = Util.parseHostsFile(hostsFile);
 
-			writers = new FileWriter[hosts.length];
-
-			for (int i = 0; i < writers.length; i++) {
-
-				writers[i] = new FileWriter(mapDir.getPath() + "/" + inputFile.getName() + "_" + i);
-			}
-
-			BufferedReader reader = new BufferedReader(new FileReader(inputFile));
-
-			String line;
-
-			while ((line = reader.readLine()) != null) {
-
-				String[] tokens = line.split(" ");
-
-				String matrix = tokens[0];
-				int row = Integer.parseInt(tokens[1]);
-				int col = Integer.parseInt(tokens[2]);
-				int val = Integer.parseInt(tokens[3]);
-
-				if (matrix.equals("m")) {
-
-					for (int k = 0; k < r; k++) {
-
-						write(matrix, row, k, col, val);
-					}
-
-				} else if (matrix.equals("n")) {
-
-					for (int k = 0; k < p; k++) {
-
-						write(matrix, k, col, row, val);
-					}
-				}
-			}
-
-			reader.close();
-
-			for (FileWriter writer : writers) {
-
-				writer.flush();
-				writer.close();
-			}
+			map();
 
 			done();
 
@@ -125,13 +86,67 @@ public class MapTask extends Task {
 		}
 	}
 
+	private void map() throws IOException {
+
+		writers = new FileWriter[hosts.length];
+
+		for (int i = 0; i < writers.length; i++) {
+
+			@SuppressWarnings("resource")
+			FileWriter writer = new FileWriter(mapDir.getPath() + "/" + inputFile.getName() + "_" + i);
+
+			// owner-host owner-port taskId size part-count partition-index
+			writer.write(owner.getHost() + " " + owner.getPort() + " " + taskId + " " + q + " " + hosts.length + " "
+					+ partNo + "\n");
+
+			writers[i] = writer;
+		}
+
+		BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+
+		String line;
+
+		while ((line = reader.readLine()) != null) {
+
+			String[] tokens = line.split(" ");
+
+			String matrix = tokens[0];
+			int row = Integer.parseInt(tokens[1]);
+			int col = Integer.parseInt(tokens[2]);
+			int val = Integer.parseInt(tokens[3]);
+
+			if (matrix.equals("m")) {
+
+				for (int k = 0; k < r; k++) {
+
+					write(matrix, row, k, col, val);
+				}
+
+			} else if (matrix.equals("n")) {
+
+				for (int k = 0; k < p; k++) {
+
+					write(matrix, k, col, row, val);
+				}
+			}
+		}
+
+		reader.close();
+
+		for (FileWriter writer : writers) {
+
+			writer.flush();
+			writer.close();
+		}
+	}
+
 	private void write(String matrix, int tRow, int tCol, int order, int val) throws IOException {
 
 		// matrix targetRow targetCol order value
 
 		FileWriter writer = writers[(tRow * r + tCol) % writers.length];
 
-		writer.write(matrix + " " + tRow + " " + tCol + " " + order + " " + val + "\n");
+		writer.write(tRow + " " + tCol + " " + matrix + " " + order + " " + val + "\n");
 		writer.flush();
 	}
 }

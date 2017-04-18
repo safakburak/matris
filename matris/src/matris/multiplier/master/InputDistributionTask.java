@@ -5,11 +5,11 @@ import java.io.File;
 import matris.common.Task;
 import matris.common.TaskListener;
 import matris.ftp.FileSendTask;
-import matris.messages.MsgMapStart;
+import matris.messages.MsgMapInfo;
 import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
 
-public class DistributionTask extends Task {
+public class InputDistributionTask extends Task {
 
 	private MessageSocket socket;
 
@@ -23,8 +23,10 @@ public class DistributionTask extends Task {
 
 	private int p, q, r;
 
-	public DistributionTask(MessageSocket socket, MessageAddress worker, File inputPart, int taskId, int p, int q,
-			int r) {
+	private int partNo;
+
+	public InputDistributionTask(MessageSocket socket, MessageAddress worker, File inputPart, int taskId, int p, int q,
+			int r, int partNo) {
 
 		this.socket = socket;
 		this.worker = worker;
@@ -33,6 +35,7 @@ public class DistributionTask extends Task {
 		this.p = p;
 		this.q = q;
 		this.r = r;
+		this.partNo = partNo;
 	}
 
 	@Override
@@ -64,13 +67,14 @@ public class DistributionTask extends Task {
 
 								FileSendTask cTask = (FileSendTask) task;
 
-								MsgMapStart start = new MsgMapStart();
+								MsgMapInfo start = new MsgMapInfo();
 								start.setTaskId(taskId);
 								start.setRemoteInputPartId(inputPartRemoteId);
 								start.setRemoteHostsFileId(cTask.getRemoteFileId());
 								start.setP(p);
 								start.setQ(q);
 								start.setR(r);
+								start.setPartNo(partNo);
 
 								start.setAckRequired(true);
 								start.setDestination(cTask.getTo());
