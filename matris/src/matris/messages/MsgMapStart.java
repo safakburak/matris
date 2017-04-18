@@ -9,15 +9,15 @@ public class MsgMapStart extends Message {
 
 	private int taskId;
 
-	private int remoteFileId;
+	private int remoteInputPartId;
+
+	private int remoteHostsFileId;
 
 	private int p;
 
 	private int q;
 
 	private int r;
-
-	private int partCount;
 
 	public MsgMapStart() {
 
@@ -34,14 +34,24 @@ public class MsgMapStart extends Message {
 		this.taskId = taskId;
 	}
 
-	public int getRemoteFileId() {
+	public int getRemoteInputPartId() {
 
-		return remoteFileId;
+		return remoteInputPartId;
 	}
 
-	public void setRemoteFileId(int fileId) {
+	public void setRemoteInputPartId(int fileId) {
 
-		this.remoteFileId = fileId;
+		this.remoteInputPartId = fileId;
+	}
+
+	public int getRemoteHostsFileId() {
+
+		return remoteHostsFileId;
+	}
+
+	public void setRemoteHostsFileId(int remoteHostsFileId) {
+
+		this.remoteHostsFileId = remoteHostsFileId;
 	}
 
 	public int getP() {
@@ -74,35 +84,25 @@ public class MsgMapStart extends Message {
 		this.r = r;
 	}
 
-	public int getPartCount() {
-
-		return partCount;
-	}
-
-	public void setPartCount(int partCount) {
-
-		this.partCount = partCount;
-	}
-
 	@Override
 	protected void deserialize(ByteBuffer buffer) {
 
 		taskId = buffer.getInt();
-		remoteFileId = buffer.getInt();
+		remoteInputPartId = buffer.getInt();
+		remoteHostsFileId = buffer.getInt();
 		p = buffer.getInt();
 		q = buffer.getInt();
 		r = buffer.getInt();
-		partCount = buffer.getInt();
 	}
 
 	@Override
 	protected void serialize(ByteBuffer buffer) {
 
 		buffer.putInt(taskId);
-		buffer.putInt(remoteFileId);
+		buffer.putInt(remoteInputPartId);
+		buffer.putInt(remoteHostsFileId);
 		buffer.putInt(p);
 		buffer.putInt(q);
 		buffer.putInt(r);
-		buffer.putInt(partCount);
 	}
 }

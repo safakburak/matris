@@ -2,9 +2,11 @@ package matris.multiplier.master;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.ConcurrentHashMap;
 
 import matris.cluster.coordinator.Coordinator;
+import matris.common.Task;
+import matris.common.TaskListener;
+import matris.common.TaskSet;
 import matris.tools.Util;
 
 public class MasterMain extends Coordinator {
@@ -12,8 +14,6 @@ public class MasterMain extends Coordinator {
 	private File inputDir = new File("input");
 	private File processDir = new File("process");
 	private File outputDir = new File("output");
-
-	private ConcurrentHashMap<Integer, MultMaster> tasks = new ConcurrentHashMap<>();
 
 	public MasterMain(int port) throws IOException {
 
@@ -26,12 +26,14 @@ public class MasterMain extends Coordinator {
 		processDir.mkdirs();
 		outputDir.mkdirs();
 
-		checkInput();
+		start();
 	}
 
-	private void checkInput() {
+	private void start() {
 
 		if (inputDir.exists()) {
+
+			TaskSet allMultiplications = new TaskSet();
 
 			int taskId = 0;
 
@@ -39,17 +41,37 @@ public class MasterMain extends Coordinator {
 
 				if (file.isFile()) {
 
-					try {
+					MultiplicationTask task = new MultiplicationTask(taskId++, file, socket, getWorkers());
 
-						MultMaster task = new MultMaster(taskId++, file, socket, getWorkers());
-						tasks.put(task.getTaskId(), task);
+					task.addListener(new TaskListener() {
 
-					} catch (NumberFormatException | IOException e) {
+						@Override
+						public void onComplete(Task task, boolean success) {
 
-						System.out.println("Cannot process " + file.getPath() + ". Skipped!");
-					}
+							if (success == false) {
+
+								System.out.println("Multiplication tast FAILED for: " + file.getPath());
+							}
+						}
+					});
+
+					allMultiplications.addTask(task);
 				}
 			}
+
+			allMultiplications.addListener(new TaskListener() {
+
+				@Override
+				public void onComplete(Task task, boolean success) {
+
+					if (success) {
+
+						System.out.println("All tasks completed.");
+					}
+				}
+			});
+
+			allMultiplications.start();
 		}
 	}
 

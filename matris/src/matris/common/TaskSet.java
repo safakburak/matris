@@ -9,6 +9,8 @@ public class TaskSet extends Task implements TaskListener {
 
 	public void addTask(Task task) {
 
+		tasks.put(task, true);
+
 		task.addListener(this);
 	}
 

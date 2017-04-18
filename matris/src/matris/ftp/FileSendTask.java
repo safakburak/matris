@@ -24,12 +24,13 @@ public class FileSendTask extends Task implements MessageSocketListener {
 
 	private int remoteFileId;
 
-	public FileSendTask(MessageSocket socket, int fileId, File file, MessageAddress to) {
+	public FileSendTask(MessageSocket socket, File file, MessageAddress to) {
 
 		this.socket = socket;
-		this.fileId = fileId;
 		this.file = file;
 		this.to = to;
+
+		fileId = (file.getAbsolutePath() + to).hashCode();
 
 		this.socket.addListener(this);
 	}
@@ -101,12 +102,10 @@ public class FileSendTask extends Task implements MessageSocketListener {
 				filePart.setSize(chunkSize);
 				filePart.setData(data);
 
-				filePart.setDestHost(to.getHost());
-				filePart.setDestPort(to.getPort());
-
+				filePart.setDestination(to);
 				filePart.setAckRequired(true);
 
-				FileSendTask.this.socket.send(filePart);
+				socket.send(filePart);
 			}
 
 		} catch (IOException exception) {

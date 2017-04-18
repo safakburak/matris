@@ -1,6 +1,7 @@
 package matris.common;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class Task {
 
@@ -8,7 +9,7 @@ public abstract class Task {
 
 	private ConcurrentHashMap<TaskListener, Boolean> listeners = new ConcurrentHashMap<>();
 
-	private Boolean completed = false;
+	private AtomicBoolean completed = new AtomicBoolean(false);
 
 	public Task() {
 
@@ -38,35 +39,36 @@ public abstract class Task {
 
 	protected void done() {
 
-		synchronized (completed) {
+		boolean wasNotCompleted = completed.compareAndSet(false, true);
 
-			if (completed == false) {
+		if (wasNotCompleted) {
 
-				for (TaskListener listener : listeners.keySet()) {
+			for (TaskListener listener : listeners.keySet()) {
 
-					listener.onComplete(Task.this, true);
-				}
-
-				clean();
+				listener.onComplete(Task.this, true);
 			}
+
+			clean();
 		}
 	}
 
 	protected void fail() {
 
-		synchronized (completed) {
+		boolean wasNotCompleted = completed.compareAndSet(false, true);
 
-			if (completed == false) {
+		if (wasNotCompleted) {
 
-				for (TaskListener listener : listeners.keySet()) {
+			for (TaskListener listener : listeners.keySet()) {
 
-					listener.onComplete(Task.this, false);
-				}
-
-				clean();
-
-				completed = true;
+				listener.onComplete(Task.this, false);
 			}
+
+			clean();
 		}
+	}
+
+	public boolean isCompleted() {
+
+		return completed.get();
 	}
 }

@@ -56,78 +56,75 @@ public class FileReceiver {
 
 		receivedPartsCounts.putIfAbsent(filePart.getFileId(), new AtomicLong());
 
-		AtomicLong partCounter = receivedPartsCounts.get(filePart.getFileId());
+		File partFile = null;
+		FileOutputStream outputStream = null;
 
-		synchronized (partCounter) {
+		try {
 
-			File partFile = null;
-			FileOutputStream outputStream = null;
+			MessageAddress from = filePart.getSrcAddress();
 
-			try {
+			String fileName = "file_" + from.getHost() + "_" + from.getPort() + "_" + filePart.getFileId() + "_"
+					+ filePart.getPartIndex();
 
-				MessageAddress from = filePart.getSrcAddress();
+			partFile = new File(receiveDir.getPath() + "/" + fileName);
 
-				String fileName = "file_" + from.getHost() + "_" + from.getPort() + "_" + filePart.getFileId() + "_"
-						+ filePart.getPartIndex();
+			File mergedFile = new File(receiveDir.getPath() + "/" + "file_" + from.getHost() + "_" + from.getPort()
+					+ "_" + filePart.getFileId());
 
-				partFile = new File(receiveDir.getPath() + "/" + fileName);
+			if (partFile.exists() == false && mergedFile.exists() == false) {
 
-				File mergedFile = new File(receiveDir.getPath() + "/" + "file_" + from.getHost() + "_" + from.getPort()
-						+ "_" + filePart.getFileId());
+				partFile.createNewFile();
 
-				if (partFile.exists() == false && mergedFile.exists() == false) {
+				outputStream = new FileOutputStream(partFile);
 
-					partFile.createNewFile();
+				outputStream.write(filePart.getData());
+				outputStream.flush();
+				outputStream.close();
 
-					outputStream = new FileOutputStream(partFile);
+				AtomicLong partCounter = receivedPartsCounts.get(filePart.getFileId());
 
-					outputStream.write(filePart.getData());
-					outputStream.flush();
-					outputStream.close();
+				long partCount = partCounter.incrementAndGet();
 
-					long partCount = partCounter.incrementAndGet();
+				if (partCount == filePart.getPartCount()) {
 
-					if (partCount == filePart.getPartCount()) {
+					receivedPartsCounts.remove(partCounter);
 
-						receivedPartsCounts.remove(partCounter);
+					FileMergeTask mergeTask = new FileMergeTask(filePart.getSrcAddress(), filePart.getFileId(),
+							filePart.getPartCount(), receiveDir);
 
-						FileMergeTask mergeTask = new FileMergeTask(filePart.getSrcAddress(), filePart.getFileId(),
-								filePart.getPartCount(), receiveDir);
+					mergeTask.addListener(new TaskListener() {
+						@Override
+						public void onComplete(Task task, boolean success) {
 
-						mergeTask.addListener(new TaskListener() {
-							@Override
-							public void onComplete(Task task, boolean success) {
+							if (success) {
 
-								if (success) {
+								FileMergeTask mergeTask = (FileMergeTask) task;
 
-									FileMergeTask mergeTask = (FileMergeTask) task;
+								int fileId = mergeTask.getMergedFile().getAbsolutePath().hashCode();
 
-									int fileId = mergeTask.getMergedFile().getAbsolutePath().hashCode();
+								MsgFileReceived fileReceived = new MsgFileReceived();
+								fileReceived.setFileId(filePart.getFileId());
+								fileReceived.setRemoteFileId(fileId);
 
-									MsgFileReceived fileReceived = new MsgFileReceived();
-									fileReceived.setFileId(filePart.getFileId());
-									fileReceived.setRemoteFileId(fileId);
-									fileReceived.setDestHost(filePart.getSrcHost());
-									fileReceived.setDestPort(filePart.getSrcPort());
-									fileReceived.setAckRequired(true);
+								fileReceived.setDestination(filePart.getSrcAddress());
+								fileReceived.setAckRequired(true);
 
-									receivedFiles.put(fileId, mergeTask.getMergedFile());
+								receivedFiles.put(fileId, mergeTask.getMergedFile());
 
-									socket.send(fileReceived);
-								}
+								socket.send(fileReceived);
 							}
-						});
+						}
+					});
 
-						mergeTask.start();
-					}
+					mergeTask.start();
 				}
+			}
 
-			} catch (IOException e) {
+		} catch (IOException e) {
 
-				if (partFile != null) {
+			if (partFile != null) {
 
-					partFile.delete();
-				}
+				partFile.delete();
 			}
 		}
 	}

@@ -13,14 +13,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import matris.common.Task;
 import matris.common.TaskListener;
 import matris.ftp.FileReceiver;
-import matris.ftp.FileSendTask;
-import matris.messages.MsgMapStart;
 import matris.messagesocket.Message;
 import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
 import matris.messagesocket.MessageSocketListener;
 
-public class MultMaster implements MessageSocketListener {
+public class MultiplicationTask extends Task implements MessageSocketListener {
 
 	private int taskId;
 
@@ -32,9 +30,9 @@ public class MultMaster implements MessageSocketListener {
 
 	private int p, q, r;
 
-	private File partFolder;
-
 	private FileReceiver fileReceiver;
+
+	private File partDir;
 
 	private File rootDir;
 
@@ -42,10 +40,9 @@ public class MultMaster implements MessageSocketListener {
 
 	private List<File> inputParts;
 
-	private ConcurrentHashMap<File, MessageAddress> mapWorkers = new ConcurrentHashMap<>();
+	private ConcurrentHashMap<File, DistributionTask> distributeTasks = new ConcurrentHashMap<>();
 
-	public MultMaster(int taskId, File inputFile, MessageSocket socket, List<MessageAddress> workers)
-			throws NumberFormatException, IOException {
+	public MultiplicationTask(int taskId, File inputFile, MessageSocket socket, List<MessageAddress> workers) {
 
 		this.taskId = taskId;
 		this.inputFile = inputFile;
@@ -59,41 +56,57 @@ public class MultMaster implements MessageSocketListener {
 		receiveDir.mkdirs();
 
 		fileReceiver = new FileReceiver(this.socket, receiveDir);
+	}
 
-		partition();
+	@Override
+	protected void doTask() {
 
-		for (int i = 0; i < inputParts.size(); i++) {
+		try {
 
-			File part = inputParts.get(i);
+			partition();
 
-			MessageAddress addr = workers.get(i % workers.size());
+			for (int i = 0; i < inputParts.size(); i++) {
 
-			FileSendTask task = new FileSendTask(socket, part.getPath().hashCode(), inputParts.get(i), addr);
+				File inputPart = inputParts.get(i);
 
-			task.addListener(new TaskListener() {
-				@Override
-				public void onComplete(Task task, boolean success) {
+				MessageAddress worker = workers.get(i % workers.size());
 
-					if (success) {
+				DistributionTask distributeTask = new DistributionTask(socket, worker, inputPart, taskId, p, q, r);
 
-						FileSendTask cTask = (FileSendTask) task;
+				distributeTask.addListener(new TaskListener() {
 
-						MsgMapStart start = new MsgMapStart();
-						start.setTaskId(taskId);
-						start.setRemoteFileId(cTask.getRemoteFileId());
-						start.setP(p);
-						start.setQ(q);
-						start.setR(r);
-						start.setAckRequired(true);
-						start.setDestination(cTask.getTo());
-						start.setPartCount(workers.size());
+					@Override
+					public void onComplete(Task task, boolean success) {
 
-						socket.send(start);
+						checkCompletion();
 					}
-				}
-			});
+				});
 
-			task.start();
+				distributeTasks.put(inputPart, distributeTask);
+
+				distributeTask.start();
+			}
+
+		} catch (NumberFormatException | IOException e) {
+
+			e.printStackTrace();
+
+			fail();
+		}
+	}
+
+	private void checkCompletion() {
+
+		boolean completed = true;
+
+		for (DistributionTask distributeTask : distributeTasks.values()) {
+
+			completed &= distributeTask.isCompleted();
+		}
+
+		if (completed) {
+
+			done();
 		}
 	}
 
@@ -108,14 +121,14 @@ public class MultMaster implements MessageSocketListener {
 		int rowCount = p * q + q * r;
 		int partSize = (int) (rowCount / workers.size() + 0.5);
 
-		partFolder = new File(rootDir.getPath() + "/parts");
-		partFolder.mkdirs();
+		partDir = new File(rootDir.getPath() + "/parts");
+		partDir.mkdirs();
 
 		inputParts = new ArrayList<>();
 
 		for (int i = 0; i < workers.size(); i++) {
 
-			File part = new File(partFolder.getPath() + "/part_" + i);
+			File part = new File(partDir.getPath() + "/part_" + i);
 
 			BufferedWriter writer = new BufferedWriter(new FileWriter(part));
 

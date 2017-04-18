@@ -9,6 +9,7 @@ import java.io.IOException;
 import matris.common.Task;
 import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
+import matris.tools.Util;
 
 public class MapTask extends Task {
 
@@ -18,7 +19,9 @@ public class MapTask extends Task {
 
 	private int taskId;
 
-	private File file;
+	private File inputFile;
+
+	private File hostsFile;
 
 	private int p;
 
@@ -26,28 +29,31 @@ public class MapTask extends Task {
 
 	private int r;
 
-	private int partCount;
-
 	private FileWriter[] writers;
 
-	private int partNo;
+	private File rootDir;
 
-	public MapTask(MessageSocket socket, MessageAddress owner, int taskId, File file, int p, int q, int r, File rootDir,
-			int partCount) {
+	private File mapDir;
+
+	private MessageAddress[] hosts;
+
+	public MapTask(MessageSocket socket, MessageAddress owner, int taskId, File inputFile, File hostsFile, int p, int q,
+			int r, File rootDir) {
 
 		this.socket = socket;
 		this.owner = owner;
 		this.taskId = taskId;
-		this.file = file;
+		this.inputFile = inputFile;
+		this.hostsFile = hostsFile;
 		this.p = p;
 		this.q = q;
 		this.r = r;
-		this.partCount = partCount;
+		this.rootDir = rootDir;
 	}
 
 	public File getFile() {
 
-		return file;
+		return inputFile;
 	}
 
 	public int getTaskId() {
@@ -55,24 +61,24 @@ public class MapTask extends Task {
 		return taskId;
 	}
 
-	public int getPartNo() {
-
-		return partNo;
-	}
-
 	@Override
 	protected void doTask() {
 
 		try {
 
-			writers = new FileWriter[partCount];
+			mapDir = new File(rootDir.getPath() + "/map");
+			mapDir.mkdirs();
+
+			hosts = Util.parseHostsFile(hostsFile);
+
+			writers = new FileWriter[hosts.length];
 
 			for (int i = 0; i < writers.length; i++) {
 
-				writers[i] = new FileWriter(file.getPath() + "_map_" + i);
+				writers[i] = new FileWriter(mapDir.getPath() + "/" + inputFile.getName() + "_" + i);
 			}
 
-			BufferedReader reader = new BufferedReader(new FileReader(file));
+			BufferedReader reader = new BufferedReader(new FileReader(inputFile));
 
 			String line;
 

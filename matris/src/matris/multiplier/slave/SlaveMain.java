@@ -19,6 +19,8 @@ public class SlaveMain extends Worker implements MessageSocketListener {
 
 	private FileReceiver fileReceiver;
 
+	private File rootDir;
+
 	private File receiveDir;
 
 	private ConcurrentHashMap<File, MapTask> mapTasks = new ConcurrentHashMap<>();
@@ -31,7 +33,7 @@ public class SlaveMain extends Worker implements MessageSocketListener {
 
 		socket.addListener(this);
 
-		File rootDir = new File(parentDir.getPath() + "/" + name);
+		rootDir = new File(parentDir.getPath() + "/" + name);
 
 		Util.remove(rootDir);
 
@@ -52,13 +54,15 @@ public class SlaveMain extends Worker implements MessageSocketListener {
 
 			MsgMapStart start = (MsgMapStart) message;
 
-			File file = fileReceiver.getFile(start.getRemoteFileId());
+			File inputFile = fileReceiver.getFile(start.getRemoteInputPartId());
+			File hostsFile = fileReceiver.getFile(start.getRemoteHostsFileId());
 
-			MapTask mapTask = new MapTask(socket, message.getSrcAddress(), start.getTaskId(), file, start.getP(),
-					start.getQ(), start.getR(), receiveDir, start.getPartCount());
+			MapTask mapTask = new MapTask(socket, message.getSrcAddress(), start.getTaskId(), inputFile, hostsFile,
+					start.getP(), start.getQ(), start.getR(), rootDir);
 
-			MapTask prev = mapTasks.putIfAbsent(file, mapTask);
+			MapTask prev = mapTasks.putIfAbsent(inputFile, mapTask);
 
+			// avoid same message
 			if (prev == null) {
 
 				mapTask.addListener(new TaskListener() {

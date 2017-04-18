@@ -1,7 +1,6 @@
 package matris.cluster.coordinator;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,21 +53,13 @@ public class Coordinator {
 			}
 		});
 
-		BufferedReader reader = new BufferedReader(new FileReader("hosts.txt"));
+		MessageAddress[] wokers = Util.parseHostsFile(new File("hosts.txt"));
 
-		String line;
+		for (MessageAddress worker : wokers) {
 
-		while ((line = reader.readLine()) != null) {
-
-			String[] tokens = line.split(":");
-
-			MessageAddress address = new MessageAddress(tokens[0], Integer.parseInt(tokens[1]));
-
-			workerStates.put(address, true);
-			workerPingTimes.put(address, System.currentTimeMillis());
+			workerStates.put(worker, true);
+			workerPingTimes.put(worker, System.currentTimeMillis());
 		}
-
-		reader.close();
 
 		System.out.println("Starting with " + workerStates.size() + " workers.");
 
