@@ -9,6 +9,7 @@ import matris.common.Task;
 import matris.common.TaskListener;
 import matris.ftp.FileReceiver;
 import matris.messages.MsgMapInfo;
+import matris.messages.MsgReduceInfo;
 import matris.messagesocket.Message;
 import matris.messagesocket.MessageSocketListener;
 import matris.tools.Util;
@@ -24,6 +25,9 @@ public class SlaveMain extends Worker implements MessageSocketListener {
 	private File receiveDir;
 
 	private ConcurrentHashMap<File, MapTask> mapTasks = new ConcurrentHashMap<>();
+
+	// taskID -> reductionNo -> partNo -> File
+	private ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, File>>> taskReduceMapFiles = new ConcurrentHashMap<>();
 
 	public SlaveMain(String name, File parentDir, int port) throws SocketException {
 
@@ -52,35 +56,75 @@ public class SlaveMain extends Worker implements MessageSocketListener {
 
 		if (message instanceof MsgMapInfo) {
 
-			MsgMapInfo start = (MsgMapInfo) message;
+			handleMapInfo((MsgMapInfo) message);
 
-			File inputFile = fileReceiver.getFile(start.getRemoteInputPartId());
-			File hostsFile = fileReceiver.getFile(start.getRemoteHostsFileId());
+		} else if (message instanceof MsgReduceInfo) {
 
-			MapTask mapTask = new MapTask(socket, message.getSrcAddress(), start.getTaskId(), inputFile, hostsFile,
-					start.getP(), start.getQ(), start.getR(), rootDir, start.getPartNo());
-
-			MapTask prev = mapTasks.putIfAbsent(inputFile, mapTask);
-
-			// avoid same message
-			if (prev == null) {
-
-				mapTask.addListener(new TaskListener() {
-
-					@Override
-					public void onComplete(Task task, boolean success) {
-
-						MapTask mapTask = (MapTask) task;
-
-						mapTasks.remove(mapTask.getFile());
-
-						System.out.println(name + " completed mapping!");
-					}
-				});
-
-				mapTask.start();
-			}
+			handleReduceInfo((MsgReduceInfo) message);
 		}
+	}
+
+	private void handleReduceInfo(MsgReduceInfo info) {
+
+		taskReduceMapFiles.putIfAbsent(info.getTaskId(), new ConcurrentHashMap<>());
+
+		ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, File>> reductionFiles = taskReduceMapFiles
+				.get(info.getTaskId());
+
+		reductionFiles.putIfAbsent(info.getReductionNo(), new ConcurrentHashMap<>());
+
+		ConcurrentHashMap<Integer, File> partFiles = reductionFiles.get(info.getReductionNo());
+
+		File prevFile = partFiles.putIfAbsent(info.getPartNo(), fileReceiver.getFile(info.getRemoteFileId()));
+
+		if (prevFile == null && partFiles.size() == info.getPartCount()) {
+
+			ReduceTask reduceTask = new ReduceTask(socket, partFiles.values(), info.getQ(), info.getTaskId(), rootDir,
+					info.getOwner(), info.getReductionNo());
+
+			reduceTask.addListener(new TaskListener() {
+
+				@Override
+				public void onComplete(Task task, boolean success) {
+
+					System.out.println(name + "completed reduction for task " + info.getTaskId() + " reduction "
+							+ info.getReductionNo());
+				}
+			});
+
+			reduceTask.start();
+		}
+	}
+
+	private void handleMapInfo(MsgMapInfo info) {
+
+		File inputFile = fileReceiver.getFile(info.getRemoteInputPartId());
+		File hostsFile = fileReceiver.getFile(info.getRemoteHostsFileId());
+
+		MapTask mapTask = new MapTask(socket, info.getSrcAddress(), info.getTaskId(), inputFile, hostsFile, info.getP(),
+				info.getQ(), info.getR(), rootDir, info.getPartNo());
+
+		MapTask prev = mapTasks.putIfAbsent(inputFile, mapTask);
+
+		// avoid same message
+		if (prev == null) {
+
+			mapTask.addListener(new TaskListener() {
+
+				@Override
+				public void onComplete(Task task, boolean success) {
+
+					MapTask mapTask = (MapTask) task;
+
+					mapTasks.remove(mapTask.getFile());
+
+					System.out.println(name + " completed mapping!");
+				}
+			});
+
+			mapTask.start();
+		}
+
 	}
 
 	public static void main(String[] args) throws SocketException {
@@ -95,11 +139,11 @@ public class SlaveMain extends Worker implements MessageSocketListener {
 		new SlaveMain("slave2", dir, 10001);
 		new SlaveMain("slave3", dir, 10002);
 		new SlaveMain("slave4", dir, 10003);
-		new SlaveMain("slave5", dir, 10004);
-		new SlaveMain("slave6", dir, 10005);
-		new SlaveMain("slave7", dir, 10006);
-		new SlaveMain("slave8", dir, 10007);
-		new SlaveMain("slave9", dir, 10008);
-		new SlaveMain("slave10", dir, 10009);
+		// new SlaveMain("slave5", dir, 10004);
+		// new SlaveMain("slave6", dir, 10005);
+		// new SlaveMain("slave7", dir, 10006);
+		// new SlaveMain("slave8", dir, 10007);
+		// new SlaveMain("slave9", dir, 10008);
+		// new SlaveMain("slave10", dir, 10009);
 	}
 }

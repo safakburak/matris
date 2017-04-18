@@ -7,6 +7,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import matris.common.Task;
+import matris.common.TaskListener;
+import matris.common.TaskSet;
 import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
 import matris.tools.Util;
@@ -35,7 +37,9 @@ public class MapTask extends Task {
 
 	private File mapDir;
 
-	private MessageAddress[] hosts;
+	private MessageAddress[] workers;
+
+	private File[] mappedFiles;
 
 	private int partNo;
 
@@ -69,14 +73,36 @@ public class MapTask extends Task {
 
 		try {
 
-			mapDir = new File(rootDir.getPath() + "/map");
+			mapDir = new File(rootDir.getPath() + "/map_" + taskId + "_" + partNo);
 			mapDir.mkdirs();
 
-			hosts = Util.parseHostsFile(hostsFile);
+			workers = Util.parseHostsFile(hostsFile);
 
 			map();
 
-			done();
+			TaskSet mapFileSendTasks = new TaskSet();
+
+			for (int i = 0; i < mappedFiles.length; i++) {
+
+				SendMappedFileTask task = new SendMappedFileTask(socket, workers[i], mappedFiles[i], taskId, owner, q,
+						partNo, workers.length, i);
+
+				mapFileSendTasks.addTask(task);
+			}
+
+			mapFileSendTasks.addListener(new TaskListener() {
+
+				@Override
+				public void onComplete(Task task, boolean success) {
+
+					if (success) {
+
+						done();
+					}
+				}
+			});
+
+			mapFileSendTasks.start();
 
 		} catch (IOException e) {
 
@@ -88,17 +114,17 @@ public class MapTask extends Task {
 
 	private void map() throws IOException {
 
-		writers = new FileWriter[hosts.length];
+		writers = new FileWriter[workers.length];
+		mappedFiles = new File[workers.length];
 
 		for (int i = 0; i < writers.length; i++) {
 
+			File mappedFile = new File(mapDir.getPath() + "/" + inputFile.getName() + "_" + i);
+
 			@SuppressWarnings("resource")
-			FileWriter writer = new FileWriter(mapDir.getPath() + "/" + inputFile.getName() + "_" + i);
+			FileWriter writer = new FileWriter(mappedFile);
 
-			// owner-host owner-port taskId size part-count partition-index
-			writer.write(owner.getHost() + " " + owner.getPort() + " " + taskId + " " + q + " " + hosts.length + " "
-					+ partNo + "\n");
-
+			mappedFiles[i] = mappedFile;
 			writers[i] = writer;
 		}
 

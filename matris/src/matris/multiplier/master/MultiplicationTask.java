@@ -40,7 +40,7 @@ public class MultiplicationTask extends Task implements MessageSocketListener {
 
 	private List<File> inputParts;
 
-	private ConcurrentHashMap<File, InputDistributionTask> distributeTasks = new ConcurrentHashMap<>();
+	private ConcurrentHashMap<File, InputPartSendTask> distributeTasks = new ConcurrentHashMap<>();
 
 	public MultiplicationTask(int taskId, File inputFile, MessageSocket socket, List<MessageAddress> workers) {
 
@@ -71,7 +71,7 @@ public class MultiplicationTask extends Task implements MessageSocketListener {
 
 				MessageAddress worker = workers.get(i % workers.size());
 
-				InputDistributionTask distributeTask = new InputDistributionTask(socket, worker, inputPart, taskId, p,
+				InputPartSendTask distributeTask = new InputPartSendTask(socket, worker, inputPart, taskId, p,
 						q, r, i);
 
 				distributeTask.addListener(new TaskListener() {
@@ -100,7 +100,7 @@ public class MultiplicationTask extends Task implements MessageSocketListener {
 
 		boolean completed = true;
 
-		for (InputDistributionTask distributeTask : distributeTasks.values()) {
+		for (InputPartSendTask distributeTask : distributeTasks.values()) {
 
 			completed &= distributeTask.isCompleted();
 		}

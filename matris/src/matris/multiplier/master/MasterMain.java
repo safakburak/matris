@@ -66,7 +66,7 @@ public class MasterMain extends Coordinator {
 
 					if (success) {
 
-						System.out.println("All tasks completed.");
+						System.out.println("All input partitions distributed.");
 					}
 				}
 			});

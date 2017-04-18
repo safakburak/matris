@@ -9,7 +9,7 @@ import matris.messages.MsgMapInfo;
 import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
 
-public class InputDistributionTask extends Task {
+public class InputPartSendTask extends Task {
 
 	private MessageSocket socket;
 
@@ -25,7 +25,7 @@ public class InputDistributionTask extends Task {
 
 	private int partNo;
 
-	public InputDistributionTask(MessageSocket socket, MessageAddress worker, File inputPart, int taskId, int p, int q,
+	public InputPartSendTask(MessageSocket socket, MessageAddress worker, File inputPart, int taskId, int p, int q,
 			int r, int partNo) {
 
 		this.socket = socket;

@@ -1,15 +1,15 @@
 package matris.common;
 
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TaskSet extends Task implements TaskListener {
 
-	private ConcurrentHashMap<Task, Boolean> tasks = new ConcurrentHashMap<>();
+	private ArrayList<Task> tasks = new ArrayList<>();
 
 	public void addTask(Task task) {
 
-		tasks.put(task, true);
+		tasks.add(task);
 
 		task.addListener(this);
 	}
@@ -17,7 +17,7 @@ public class TaskSet extends Task implements TaskListener {
 	@Override
 	protected void doTask() {
 
-		for (Task task : tasks.keySet()) {
+		for (Task task : tasks) {
 
 			task.start();
 		}
@@ -28,17 +28,11 @@ public class TaskSet extends Task implements TaskListener {
 
 		if (success) {
 
-			tasks.put(task, true);
-
 			boolean completed = true;
 
-			for (Entry<Task, Boolean> e : tasks.entrySet()) {
+			for (Task t : tasks) {
 
-				if (e.getValue() == false) {
-
-					completed = false;
-					break;
-				}
+				completed &= t.isCompleted();
 			}
 
 			if (completed) {
@@ -50,5 +44,10 @@ public class TaskSet extends Task implements TaskListener {
 
 			fail();
 		}
+	}
+
+	public List<Task> getTasks() {
+
+		return tasks;
 	}
 }

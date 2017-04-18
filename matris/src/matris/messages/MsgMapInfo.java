@@ -19,6 +19,7 @@ public class MsgMapInfo extends Message {
 
 	private int r;
 
+	// id of the origin partition
 	private int partNo;
 
 	public MsgMapInfo() {
