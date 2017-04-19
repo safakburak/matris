@@ -84,13 +84,15 @@ public class Util {
 
 			List<File> result = new ArrayList<>();
 
-			for (int i = 0; i < files.size(); i++) {
+			for (int i = 0; i < files.size(); i += 2) {
 
 				if ((i + 1) < files.size()) {
 
 					result.add(merge(files.get(i), files.get(i + 1), comparator));
 
-					i++;
+				} else {
+
+					result.add(files.get(i));
 				}
 			}
 

@@ -118,6 +118,8 @@ public class ReduceTask extends Task {
 
 		int[] m = new int[q];
 		int[] n = new int[q];
+		int mOrder = -1;
+		int nOrder = -1;
 
 		while ((line = reader.readLine()) != null) {
 
@@ -132,13 +134,15 @@ public class ReduceTask extends Task {
 			if (matrix == 'm') {
 
 				m[order] = val;
+				mOrder = order;
 
 			} else if (matrix == 'n') {
 
 				n[order] = val;
+				nOrder = order;
 			}
 
-			if (order == (q - 1)) {
+			if (order == (q - 1) && mOrder == nOrder) {
 
 				int result = 0;
 
