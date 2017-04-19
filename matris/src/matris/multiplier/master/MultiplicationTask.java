@@ -17,6 +17,7 @@ import matris.messagesocket.Message;
 import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
 import matris.messagesocket.MessageSocketListener;
+import matris.multiplier.common.MergeListTask;
 import matris.task.Task;
 import matris.task.TaskListener;
 import matris.tools.Util;
@@ -168,33 +169,43 @@ public class MultiplicationTask extends Task implements MessageSocketListener {
 
 					List<File> partList = new ArrayList<>(reducedParts.values());
 
-					try {
+					MergeListTask mergeListTask = new MergeListTask(partList, new ResultRowComparator());
 
-						File tmp = Util.merge(partList, new ResultRowComparator()).get(0);
+					mergeListTask.addListener(new TaskListener() {
 
-						File result = new File(outputDir.getPath() + "/" + inputFile.getName() + "_output");
+						@Override
+						public void onComplete(Task task, boolean success) {
 
-						tmp.renameTo(result);
+							if (success) {
 
-						Util.remove(rootDir);
+								MergeListTask cTask = (MergeListTask) task;
 
-						for (MessageAddress worker : workers) {
+								File result = new File(outputDir.getPath() + "/" + inputFile.getName() + "_output");
 
-							MsgDone msgDone = new MsgDone();
-							msgDone.setTaskId(taskId);
-							msgDone.setDestination(worker);
-							msgDone.setReliable(true);
+								cTask.getMergedFile().renameTo(result);
 
-							socket.send(msgDone);
+								Util.remove(rootDir);
+
+								for (MessageAddress worker : workers) {
+
+									MsgDone msgDone = new MsgDone();
+									msgDone.setTaskId(taskId);
+									msgDone.setDestination(worker);
+									msgDone.setReliable(true);
+
+									socket.send(msgDone);
+								}
+
+								done();
+
+							} else {
+
+								fail();
+							}
 						}
+					});
 
-						done();
-
-					} catch (IOException e) {
-
-						e.printStackTrace();
-						fail();
-					}
+					mergeListTask.start();
 				}
 			}
 		}

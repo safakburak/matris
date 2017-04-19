@@ -23,6 +23,11 @@ public class MergeListTask extends Task {
 		this.comparator = comparator;
 	}
 
+	public File getMergedFile() {
+
+		return mergedFile;
+	}
+
 	@Override
 	protected void doTask() {
 
@@ -43,19 +48,17 @@ public class MergeListTask extends Task {
 
 			TaskSet taskSet = new TaskSet();
 
-			for (int i = 0; i < files.size(); i++) {
+			for (int i = 0; i < parts.size(); i += 2) {
 
-				if ((i + 1) < files.size()) {
+				if ((i + 1) < parts.size()) {
 
-					MergeCoupleTask coupleTask = new MergeCoupleTask(files.get(i), files.get(i + 1), comparator);
+					MergeCoupleTask coupleTask = new MergeCoupleTask(parts.get(i), parts.get(i + 1), comparator);
 
 					taskSet.addTask(coupleTask);
 
-					i++;
-
 				} else {
 
-					result.add(files.get(i));
+					result.add(parts.get(i));
 				}
 			}
 

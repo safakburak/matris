@@ -35,11 +35,13 @@ public class MergeCoupleTask extends Task {
 		try {
 
 			mergedFile = Util.merge(file1, file2, comparator);
+
 			done();
 
 		} catch (IOException e) {
 
 			e.printStackTrace();
+
 			fail();
 		}
 	}
