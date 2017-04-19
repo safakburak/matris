@@ -26,6 +26,11 @@ public class MessageSocket {
 			while (true) {
 
 				read();
+
+				if (stop) {
+
+					break;
+				}
 			}
 		}
 	}, "reading thread");
@@ -37,6 +42,11 @@ public class MessageSocket {
 			while (true) {
 
 				write();
+
+				if (outbox.size() == 0 && stop) {
+
+					break;
+				}
 			}
 		}
 	}, "writing thread");
@@ -48,6 +58,11 @@ public class MessageSocket {
 			while (true) {
 
 				dispatch();
+
+				if (inbox.size() == 0 && stop) {
+
+					break;
+				}
 			}
 		}
 	}, "dispatching thread");
@@ -69,6 +84,8 @@ public class MessageSocket {
 	private int port;
 
 	private boolean started = false;
+
+	private boolean stop = false;
 
 	public MessageSocket(int port) throws SocketException {
 
@@ -115,6 +132,11 @@ public class MessageSocket {
 	}
 
 	public void send(Message message, boolean urgent) {
+
+		if (stop) {
+
+			return;
+		}
 
 		if (urgent) {
 
@@ -330,5 +352,10 @@ public class MessageSocket {
 	public void cancelAddress(MessageAddress address) {
 
 		cancelledAddresses.add(address);
+	}
+
+	public void stop() {
+
+		stop = true;
 	}
 }

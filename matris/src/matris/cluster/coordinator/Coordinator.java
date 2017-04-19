@@ -18,6 +18,8 @@ public class Coordinator {
 
 	private static final int WAIT = 10000;
 
+	private boolean stop = false;
+
 	private Thread watchingThread = new Thread(new Runnable() {
 
 		public void run() {
@@ -25,6 +27,11 @@ public class Coordinator {
 			while (true) {
 
 				watch();
+
+				if (stop) {
+
+					break;
+				}
 			}
 		}
 	}, "watching thread");
@@ -130,5 +137,11 @@ public class Coordinator {
 
 	protected void onWorkerUp(MessageAddress address) {
 
+	}
+
+	protected void stop() {
+
+		stop = true;
+		socket.stop();
 	}
 }

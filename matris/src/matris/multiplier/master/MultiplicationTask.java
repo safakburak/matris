@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import matris.common.Task;
 import matris.common.TaskListener;
 import matris.ftp.FileReceiver;
+import matris.messages.MsgDone;
 import matris.messages.MsgReduceComplete;
 import matris.messagesocket.Message;
 import matris.messagesocket.MessageAddress;
@@ -176,6 +177,16 @@ public class MultiplicationTask extends Task implements MessageSocketListener {
 						tmp.renameTo(result);
 
 						Util.remove(rootDir);
+
+						for (MessageAddress worker : workers) {
+
+							MsgDone msgDone = new MsgDone();
+							msgDone.setTaskId(taskId);
+							msgDone.setDestination(worker);
+							msgDone.setReliable(true);
+
+							socket.send(msgDone);
+						}
 
 						done();
 

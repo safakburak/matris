@@ -9,6 +9,7 @@ import matris.cluster.worker.Worker;
 import matris.common.Task;
 import matris.common.TaskListener;
 import matris.ftp.FileReceiver;
+import matris.messages.MsgDone;
 import matris.messages.MsgMapInfo;
 import matris.messages.MsgReduceInfo;
 import matris.messagesocket.Message;
@@ -63,6 +64,12 @@ public class SlaveMain extends Worker implements MessageSocketListener {
 		} else if (message instanceof MsgReduceInfo) {
 
 			handleReduceInfo((MsgReduceInfo) message);
+
+		} else if (message instanceof MsgDone) {
+
+			MsgDone done = (MsgDone) message;
+
+			// TODO clear
 		}
 	}
 
