@@ -2,12 +2,12 @@ package matris.multiplier.master;
 
 import java.io.File;
 
-import matris.common.Task;
-import matris.common.TaskListener;
 import matris.ftp.FileSendTask;
 import matris.messages.MsgMapInfo;
 import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
+import matris.task.Task;
+import matris.task.TaskListener;
 
 public class InputPartSendTask extends Task {
 

@@ -8,9 +8,9 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import matris.cluster.coordinator.Coordinator;
-import matris.common.Task;
-import matris.common.TaskListener;
 import matris.ftp.FileReceiver;
+import matris.task.Task;
+import matris.task.TaskListener;
 import matris.tools.Util;
 
 public class MasterMain extends Coordinator {

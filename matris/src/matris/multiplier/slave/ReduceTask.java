@@ -8,13 +8,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import matris.common.Task;
-import matris.common.TaskListener;
-import matris.common.TaskSet;
 import matris.ftp.FileSendTask;
 import matris.messages.MsgReduceComplete;
 import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
+import matris.task.Task;
+import matris.task.TaskListener;
+import matris.task.TaskSet;
 import matris.tools.Util;
 
 public class ReduceTask extends Task {

@@ -9,10 +9,10 @@ import java.io.IOException;
 
 import org.junit.Test;
 
-import matris.common.Task;
-import matris.common.TaskListener;
 import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
+import matris.task.Task;
+import matris.task.TaskListener;
 import matris.tools.Util;
 
 public class FtpTest {

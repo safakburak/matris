@@ -1,4 +1,4 @@
-package matris.common;
+package matris.task;
 
 public interface TaskListener {
 

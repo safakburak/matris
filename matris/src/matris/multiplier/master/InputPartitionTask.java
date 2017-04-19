@@ -1,6 +1,6 @@
 package matris.multiplier.master;
 
-import matris.common.Task;
+import matris.task.Task;
 
 public class InputPartitionTask extends Task {
 

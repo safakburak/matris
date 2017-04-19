@@ -5,8 +5,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import matris.common.Task;
 import matris.messagesocket.MessageAddress;
+import matris.task.Task;
 
 public class FileMergeTask extends Task {
 

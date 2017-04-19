@@ -1,4 +1,4 @@
-package matris.common;
+package matris.task;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -11,19 +11,38 @@ public abstract class Task {
 
 	private AtomicBoolean completed = new AtomicBoolean(false);
 
+	private boolean newThread;
+
 	public Task() {
 
-		taskThread = new Thread(new Runnable() {
-			public void run() {
+		this(true);
+	}
 
-				doTask();
-			}
-		});
+	public Task(boolean newThread) {
+
+		this.newThread = newThread;
+
+		if (newThread) {
+
+			taskThread = new Thread(new Runnable() {
+				public void run() {
+
+					doTask();
+				}
+			});
+		}
 	}
 
 	public final void start() {
 
-		taskThread.start();
+		if (newThread) {
+
+			taskThread.start();
+
+		} else {
+
+			doTask();
+		}
 	}
 
 	protected abstract void doTask();

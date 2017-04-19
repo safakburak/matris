@@ -7,8 +7,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import matris.cluster.worker.Worker;
-import matris.common.Task;
-import matris.common.TaskListener;
 import matris.ftp.FileReceiver;
 import matris.messages.MsgDone;
 import matris.messages.MsgMapInfo;
@@ -16,6 +14,8 @@ import matris.messages.MsgReduceInfo;
 import matris.messagesocket.Message;
 import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocketListener;
+import matris.task.Task;
+import matris.task.TaskListener;
 import matris.tools.Util;
 
 public class SlaveMain extends Worker implements MessageSocketListener {

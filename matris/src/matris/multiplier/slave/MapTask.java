@@ -6,11 +6,11 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import matris.common.Task;
-import matris.common.TaskListener;
-import matris.common.TaskSet;
 import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
+import matris.task.Task;
+import matris.task.TaskListener;
+import matris.task.TaskSet;
 import matris.tools.Util;
 
 public class MapTask extends Task {

@@ -7,7 +7,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import matris.common.Task;
+import matris.task.Task;
 import matris.tools.Util;
 
 public class SortAndMergeTask extends Task {

@@ -10,8 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
-import matris.common.Task;
-import matris.common.TaskListener;
 import matris.ftp.FileReceiver;
 import matris.messages.MsgDone;
 import matris.messages.MsgReduceComplete;
@@ -19,6 +17,8 @@ import matris.messagesocket.Message;
 import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
 import matris.messagesocket.MessageSocketListener;
+import matris.task.Task;
+import matris.task.TaskListener;
 import matris.tools.Util;
 
 public class MultiplicationTask extends Task implements MessageSocketListener {

@@ -1,4 +1,4 @@
-package matris.common;
+package matris.task;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,6 +6,16 @@ import java.util.List;
 public class TaskSet extends Task implements TaskListener {
 
 	private ArrayList<Task> tasks = new ArrayList<>();
+
+	public TaskSet() {
+
+		this(true);
+	}
+
+	public TaskSet(boolean newThread) {
+
+		super(newThread);
+	}
 
 	public void addTask(Task task) {
 

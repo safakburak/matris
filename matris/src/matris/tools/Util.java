@@ -100,7 +100,7 @@ public class Util {
 		}
 	}
 
-	private static File merge(File file1, File file2, Comparator<String> comparator) throws IOException {
+	public static File merge(File file1, File file2, Comparator<String> comparator) throws IOException {
 
 		BufferedReader reader1 = new BufferedReader(new FileReader(file1));
 		BufferedReader reader2 = new BufferedReader(new FileReader(file2));

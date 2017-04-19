@@ -4,13 +4,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-import matris.common.Task;
 import matris.messages.MsgFilePart;
 import matris.messages.MsgFileReceived;
 import matris.messagesocket.Message;
 import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
 import matris.messagesocket.MessageSocketListener;
+import matris.task.Task;
 
 public class FileSendTask extends Task implements MessageSocketListener {
 

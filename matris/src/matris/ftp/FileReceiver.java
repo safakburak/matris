@@ -7,14 +7,14 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-import matris.common.Task;
-import matris.common.TaskListener;
 import matris.messages.MsgFilePart;
 import matris.messages.MsgFileReceived;
 import matris.messagesocket.Message;
 import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
 import matris.messagesocket.MessageSocketListener;
+import matris.task.Task;
+import matris.task.TaskListener;
 import matris.tools.Util;
 
 public class FileReceiver {
