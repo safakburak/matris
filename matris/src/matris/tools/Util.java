@@ -74,7 +74,7 @@ public class Util {
 		return hosts.toArray(new MessageAddress[] {});
 	}
 
-	public static List<File> merge(List<File> files, Comparator<String> comparator) throws IOException {
+	private static List<File> merge(List<File> files, Comparator<String> comparator) throws IOException {
 
 		if (files.size() == 1) {
 

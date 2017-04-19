@@ -7,7 +7,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import matris.multiplier.common.MergeListTask;
 import matris.task.Task;
+import matris.task.TaskListener;
 import matris.tools.Util;
 
 public class SortAndMergeTask extends Task {
@@ -97,13 +99,32 @@ public class SortAndMergeTask extends Task {
 				units.add(out);
 			}
 
-			File tmpFile = Util.merge(units, new ReduceRowComparator()).get(0);
-			sortedFile = new File(parentDir.getPath() + "/" + file.getName() + "_sorted");
-			tmpFile.renameTo(sortedFile);
+			MergeListTask mergeListTask = new MergeListTask(units, new ReduceRowComparator());
 
-			Util.remove(sortDir);
+			mergeListTask.addListener(new TaskListener() {
 
-			done();
+				@Override
+				public void onComplete(Task task, boolean success) {
+
+					if (success) {
+
+						MergeListTask cTask = (MergeListTask) task;
+
+						sortedFile = new File(parentDir.getPath() + "/" + file.getName() + "_sorted");
+						cTask.getMergedFile().renameTo(sortedFile);
+
+						Util.remove(sortDir);
+
+						done();
+
+					} else {
+
+						fail();
+					}
+				}
+			});
+
+			mergeListTask.start();
 
 		} catch (IOException e) {
 

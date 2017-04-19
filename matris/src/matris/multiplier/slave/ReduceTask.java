@@ -12,6 +12,7 @@ import matris.ftp.FileSendTask;
 import matris.messages.MsgReduceComplete;
 import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
+import matris.multiplier.common.MergeListTask;
 import matris.task.Task;
 import matris.task.TaskListener;
 import matris.task.TaskSet;
@@ -88,17 +89,36 @@ public class ReduceTask extends Task {
 						sortedFiles.add(sortTask.getSortedFile());
 					}
 
-					try {
+					MergeListTask mergeListTask = new MergeListTask(sortedFiles, new ReduceRowComparator());
 
-						File tmpFile = Util.merge(sortedFiles, new ReduceRowComparator()).get(0);
+					mergeListTask.addListener(new TaskListener() {
 
-						reduce(tmpFile);
+						@Override
+						public void onComplete(Task task, boolean success) {
 
-					} catch (IOException e) {
+							if (success) {
 
-						e.printStackTrace();
-						fail();
-					}
+								MergeListTask cTask = (MergeListTask) task;
+
+								try {
+
+									reduce(cTask.getMergedFile());
+
+								} catch (IOException e) {
+
+									e.printStackTrace();
+
+									fail();
+								}
+
+							} else {
+
+								fail();
+							}
+						}
+					});
+
+					mergeListTask.start();
 				}
 			}
 		});
