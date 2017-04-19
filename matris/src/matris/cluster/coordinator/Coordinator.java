@@ -91,21 +91,24 @@ public class Coordinator {
 
 		for (Entry<MessageAddress, Long> entry : workerPingTimes.entrySet()) {
 
-			MessageAddress key = entry.getKey();
-			Long lastPingTime = entry.getValue();
+			if (stop == false) {
 
-			boolean oldState = workerStates.get(key);
-			boolean newState = lastPingTime >= limit;
+				MessageAddress key = entry.getKey();
+				Long lastPingTime = entry.getValue();
 
-			workerStates.put(key, newState);
+				boolean oldState = workerStates.get(key);
+				boolean newState = lastPingTime >= limit;
 
-			if (oldState == false && newState == true) {
+				workerStates.put(key, newState);
 
-				doOnWorkerUp(key);
+				if (oldState == false && newState == true) {
 
-			} else if (oldState == true && newState == false) {
+					doOnWorkerUp(key);
 
-				doOnWorkerDown(key);
+				} else if (oldState == true && newState == false) {
+
+					doOnWorkerDown(key);
+				}
 			}
 		}
 	}

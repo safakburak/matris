@@ -131,30 +131,34 @@ public class SlaveMain extends Worker implements MessageSocketListener {
 		File inputFile = fileReceiver.getFile(info.getRemoteInputPartId());
 		File hostsFile = fileReceiver.getFile(info.getRemoteHostsFileId());
 
-		MapTask mapTask = new MapTask(socket, info.getSrcAddress(), info.getTaskId(), inputFile, hostsFile, info.getP(),
-				info.getQ(), info.getR(), rootDir, info.getPartNo());
+		if (inputFile != null && hostsFile != null) {
 
-		MapTask prev = mapTasks.putIfAbsent(inputFile, mapTask);
+			MapTask mapTask = new MapTask(socket, info.getSrcAddress(), info.getTaskId(), inputFile, hostsFile,
+					info.getP(), info.getQ(), info.getR(), rootDir, info.getPartNo());
 
-		// avoid same message
-		if (prev == null) {
+			MapTask prev = mapTasks.putIfAbsent(inputFile, mapTask);
 
-			mapTask.addListener(new TaskListener() {
+			// avoid same message
+			if (prev == null) {
 
-				@Override
-				public void onComplete(Task task, boolean success) {
+				mapTask.addListener(new TaskListener() {
 
-					MapTask mapTask = (MapTask) task;
+					@Override
+					public void onComplete(Task task, boolean success) {
 
-					System.out.println(name + " completed mapping!");
+						MapTask mapTask = (MapTask) task;
 
-					fileReceiver.removeFile(mapTask.getHostsFile());
-					fileReceiver.removeFile(mapTask.getInputFile());
-				}
-			});
+						System.out.println(name + " completed mapping!");
 
-			mapTask.start();
+						fileReceiver.removeFile(mapTask.getHostsFile());
+						fileReceiver.removeFile(mapTask.getInputFile());
+					}
+				});
+
+				mapTask.start();
+			}
 		}
+
 	}
 
 	public static void main(String[] args) throws NumberFormatException, IOException {

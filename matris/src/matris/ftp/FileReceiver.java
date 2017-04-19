@@ -89,8 +89,6 @@ public class FileReceiver {
 
 	private void onFilePart(MsgFilePart filePart) {
 
-		receivedPartsCounts.putIfAbsent(filePart.getFileId(), new AtomicLong());
-
 		File partFile = null;
 		FileOutputStream outputStream = null;
 
@@ -106,53 +104,55 @@ public class FileReceiver {
 			File mergedFile = new File(receiveDir.getPath() + "/" + "file_" + from.getHost() + "_" + from.getPort()
 					+ "_" + filePart.getFileId());
 
-			AtomicLong partCounter = receivedPartsCounts.get(filePart.getFileId());
+			if (partFile.exists() == false && mergedFile.exists() == false) {
 
-			if (partFile.exists() == false && mergedFile.exists() == false
-					&& partCounter.get() < filePart.getPartCount()) {
+				receivedPartsCounts.putIfAbsent(filePart.getFileId(), new AtomicLong());
 
-				partFile.createNewFile();
+				AtomicLong partCounter = receivedPartsCounts.get(filePart.getFileId());
 
-				outputStream = new FileOutputStream(partFile);
+				if (partCounter.get() < filePart.getPartCount()) {
 
-				outputStream.write(filePart.getData());
-				outputStream.flush();
-				outputStream.close();
+					partFile.createNewFile();
 
-				long partCount = partCounter.incrementAndGet();
+					outputStream = new FileOutputStream(partFile);
 
-				if (partCount == filePart.getPartCount()) {
+					outputStream.write(filePart.getData());
+					outputStream.flush();
+					outputStream.close();
 
-					receivedPartsCounts.remove(partCounter);
+					long partCount = partCounter.incrementAndGet();
 
-					FileMergeTask mergeTask = new FileMergeTask(filePart.getSrcAddress(), filePart.getFileId(),
-							filePart.getPartCount(), receiveDir);
+					if (partCount == filePart.getPartCount()) {
 
-					mergeTask.addListener(new TaskListener() {
-						@Override
-						public void onComplete(Task task, boolean success) {
+						FileMergeTask mergeTask = new FileMergeTask(filePart.getSrcAddress(), filePart.getFileId(),
+								filePart.getPartCount(), receiveDir);
 
-							if (success) {
+						mergeTask.addListener(new TaskListener() {
+							@Override
+							public void onComplete(Task task, boolean success) {
 
-								FileMergeTask mergeTask = (FileMergeTask) task;
+								if (success) {
 
-								int fileId = mergeTask.getMergedFile().getAbsolutePath().hashCode();
+									FileMergeTask mergeTask = (FileMergeTask) task;
 
-								MsgFileReceived fileReceived = new MsgFileReceived();
-								fileReceived.setFileId(filePart.getFileId());
-								fileReceived.setRemoteFileId(fileId);
+									int fileId = mergeTask.getMergedFile().getAbsolutePath().hashCode();
 
-								fileReceived.setDestination(filePart.getSrcAddress());
-								fileReceived.setReliable(true);
+									MsgFileReceived fileReceived = new MsgFileReceived();
+									fileReceived.setFileId(filePart.getFileId());
+									fileReceived.setRemoteFileId(fileId);
 
-								receivedFiles.put(fileId, mergeTask.getMergedFile());
+									fileReceived.setDestination(filePart.getSrcAddress());
+									fileReceived.setReliable(true);
 
-								socket.send(fileReceived);
+									receivedFiles.put(fileId, mergeTask.getMergedFile());
+
+									socket.send(fileReceived);
+								}
 							}
-						}
-					});
+						});
 
-					mergeTask.start();
+						mergeTask.start();
+					}
 				}
 			}
 

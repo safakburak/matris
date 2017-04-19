@@ -37,11 +37,11 @@ public class FileSendTask extends Task implements MessageSocketListener {
 
 		if (extraId == null) {
 
-			fileId = (file.getAbsolutePath() + to).hashCode();
+			fileId = (file.getAbsolutePath() + to + System.currentTimeMillis()).hashCode();
 
 		} else {
 
-			fileId = (file.getAbsolutePath() + to + extraId).hashCode();
+			fileId = (file.getAbsolutePath() + to + System.currentTimeMillis() + extraId).hashCode();
 		}
 
 		this.socket.addListener(this);
