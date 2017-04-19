@@ -48,7 +48,7 @@ public class MultiplicationTask extends Task implements MessageSocketListener {
 	private ConcurrentHashMap<Integer, File> reducedParts = new ConcurrentHashMap<>();
 
 	public MultiplicationTask(int taskId, File inputFile, MessageSocket socket, List<MessageAddress> workers,
-			File outputDir, FileReceiver fileReceiver) {
+			File outputDir, FileReceiver fileReceiver, File processDir) {
 
 		this.taskId = taskId;
 		this.inputFile = inputFile;
@@ -57,7 +57,7 @@ public class MultiplicationTask extends Task implements MessageSocketListener {
 		this.outputDir = outputDir;
 		this.fileReceiver = fileReceiver;
 
-		rootDir = new File("process/task_" + taskId);
+		rootDir = new File(processDir.getPath() + "/task_" + taskId);
 		rootDir.mkdirs();
 
 		socket.addListener(this);

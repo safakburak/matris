@@ -71,7 +71,7 @@ public class MasterMain extends Coordinator {
 					taskId++;
 
 					MultiplicationTask task = new MultiplicationTask(taskName.hashCode(), file, socket, getWorkers(),
-							outputDir, fileReceiver);
+							outputDir, fileReceiver, processDir);
 
 					tasks.put(task.getTaskId(), task);
 
