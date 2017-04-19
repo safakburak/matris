@@ -76,7 +76,7 @@ public class InputPartSendTask extends Task {
 								start.setR(r);
 								start.setPartNo(partNo);
 
-								start.setAckRequired(true);
+								start.setReliable(true);
 								start.setDestination(cTask.getTo());
 
 								socket.send(start);

@@ -13,10 +13,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import matris.common.Task;
 import matris.common.TaskListener;
 import matris.ftp.FileReceiver;
+import matris.messages.MsgReduceComplete;
 import matris.messagesocket.Message;
 import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
 import matris.messagesocket.MessageSocketListener;
+import matris.tools.Util;
 
 public class MultiplicationTask extends Task implements MessageSocketListener {
 
@@ -36,26 +38,28 @@ public class MultiplicationTask extends Task implements MessageSocketListener {
 
 	private File rootDir;
 
-	private File receiveDir;
+	private File outputDir;
 
 	private List<File> inputParts;
 
 	private ConcurrentHashMap<File, InputPartSendTask> distributeTasks = new ConcurrentHashMap<>();
 
-	public MultiplicationTask(int taskId, File inputFile, MessageSocket socket, List<MessageAddress> workers) {
+	private ConcurrentHashMap<Integer, File> reducedParts = new ConcurrentHashMap<>();
+
+	public MultiplicationTask(int taskId, File inputFile, MessageSocket socket, List<MessageAddress> workers,
+			File outputDir, FileReceiver fileReceiver) {
 
 		this.taskId = taskId;
 		this.inputFile = inputFile;
 		this.socket = socket;
 		this.workers = workers;
+		this.outputDir = outputDir;
+		this.fileReceiver = fileReceiver;
 
 		rootDir = new File("process/task_" + taskId);
 		rootDir.mkdirs();
 
-		receiveDir = new File(rootDir.getPath() + "/received");
-		receiveDir.mkdirs();
-
-		fileReceiver = new FileReceiver(this.socket, receiveDir);
+		socket.addListener(this);
 	}
 
 	@Override
@@ -71,15 +75,14 @@ public class MultiplicationTask extends Task implements MessageSocketListener {
 
 				MessageAddress worker = workers.get(i % workers.size());
 
-				InputPartSendTask distributeTask = new InputPartSendTask(socket, worker, inputPart, taskId, p,
-						q, r, i);
+				InputPartSendTask distributeTask = new InputPartSendTask(socket, worker, inputPart, taskId, p, q, r, i);
 
 				distributeTask.addListener(new TaskListener() {
 
 					@Override
 					public void onComplete(Task task, boolean success) {
 
-						checkCompletion();
+						// TODO ??
 					}
 				});
 
@@ -93,21 +96,6 @@ public class MultiplicationTask extends Task implements MessageSocketListener {
 			e.printStackTrace();
 
 			fail();
-		}
-	}
-
-	private void checkCompletion() {
-
-		boolean completed = true;
-
-		for (InputPartSendTask distributeTask : distributeTasks.values()) {
-
-			completed &= distributeTask.isCompleted();
-		}
-
-		if (completed) {
-
-			done();
 		}
 	}
 
@@ -165,5 +153,45 @@ public class MultiplicationTask extends Task implements MessageSocketListener {
 	@Override
 	public void onMessage(Message message) {
 
+		if (message instanceof MsgReduceComplete) {
+
+			MsgReduceComplete reduceComplete = (MsgReduceComplete) message;
+
+			if (reduceComplete.getTaskId() == taskId) {
+
+				File file = fileReceiver.getFile(reduceComplete.getRemoteFileId());
+
+				File prev = reducedParts.putIfAbsent(reduceComplete.getReductionNo(), file);
+
+				if (prev == null && reducedParts.size() == workers.size()) {
+
+					List<File> partList = new ArrayList<>(reducedParts.values());
+
+					try {
+
+						File tmp = Util.merge(partList, new ResultRowComparator()).get(0);
+
+						File result = new File(outputDir.getPath() + "/" + inputFile.getName() + "_output");
+
+						tmp.renameTo(result);
+
+						Util.remove(rootDir);
+
+						done();
+
+					} catch (IOException e) {
+
+						e.printStackTrace();
+						fail();
+					}
+				}
+			}
+		}
+	}
+
+	@Override
+	protected void clean() {
+
+		socket.removeListener(this);
 	}
 }

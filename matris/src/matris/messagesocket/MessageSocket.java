@@ -150,7 +150,7 @@ public class MessageSocket {
 
 			} else {
 
-				if (message.isAckRequired()) {
+				if (message.isReliable()) {
 
 					MsgAck msgAck = new MsgAck();
 					msgAck.setDestHost(message.getSrcHost());
@@ -305,7 +305,7 @@ public class MessageSocket {
 				}
 
 				// sent or not add to list for retry when necessary
-				if (message.isAckRequired()) {
+				if (message.isReliable()) {
 
 					message.setLastSendTime(System.currentTimeMillis());
 

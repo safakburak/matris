@@ -103,7 +103,7 @@ public class FileSendTask extends Task implements MessageSocketListener {
 				filePart.setData(data);
 
 				filePart.setDestination(to);
-				filePart.setAckRequired(true);
+				filePart.setReliable(true);
 
 				socket.send(filePart);
 			}

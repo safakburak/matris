@@ -166,11 +166,16 @@ public class ReduceTask extends Task {
 					reduceComplete.setReductionNo(reductionNo);
 					reduceComplete.setRemoteFileId(cTask.getRemoteFileId());
 
+					reduceComplete.setDestination(owner);
+					reduceComplete.setReliable(true);
+
 					socket.send(reduceComplete);
 
 					done();
 				}
 			}
 		});
+
+		sendTask.start();
 	}
 }

@@ -1,6 +1,7 @@
 package matris.multiplier.slave;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.SocketException;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -11,6 +12,7 @@ import matris.ftp.FileReceiver;
 import matris.messages.MsgMapInfo;
 import matris.messages.MsgReduceInfo;
 import matris.messagesocket.Message;
+import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocketListener;
 import matris.tools.Util;
 
@@ -87,7 +89,7 @@ public class SlaveMain extends Worker implements MessageSocketListener {
 				@Override
 				public void onComplete(Task task, boolean success) {
 
-					System.out.println(name + "completed reduction for task " + info.getTaskId() + " reduction "
+					System.out.println(name + " completed reduction for task " + info.getTaskId() + " reduction "
 							+ info.getReductionNo());
 				}
 			});
@@ -127,7 +129,7 @@ public class SlaveMain extends Worker implements MessageSocketListener {
 
 	}
 
-	public static void main(String[] args) throws SocketException {
+	public static void main(String[] args) throws NumberFormatException, IOException {
 
 		File dir = new File("slaves");
 
@@ -135,15 +137,11 @@ public class SlaveMain extends Worker implements MessageSocketListener {
 
 		dir.mkdir();
 
-		new SlaveMain("slave1", dir, 10000);
-		new SlaveMain("slave2", dir, 10001);
-		new SlaveMain("slave3", dir, 10002);
-		new SlaveMain("slave4", dir, 10003);
-		// new SlaveMain("slave5", dir, 10004);
-		// new SlaveMain("slave6", dir, 10005);
-		// new SlaveMain("slave7", dir, 10006);
-		// new SlaveMain("slave8", dir, 10007);
-		// new SlaveMain("slave9", dir, 10008);
-		// new SlaveMain("slave10", dir, 10009);
+		MessageAddress[] slaves = Util.parseHostsFile(new File("hosts.txt"));
+
+		for (int i = 0; i < slaves.length; i++) {
+
+			new SlaveMain("slave_" + i, dir, slaves[i].getPort());
+		}
 	}
 }

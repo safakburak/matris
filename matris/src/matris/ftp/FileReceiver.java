@@ -107,7 +107,7 @@ public class FileReceiver {
 								fileReceived.setRemoteFileId(fileId);
 
 								fileReceived.setDestination(filePart.getSrcAddress());
-								fileReceived.setAckRequired(true);
+								fileReceived.setReliable(true);
 
 								receivedFiles.put(fileId, mergeTask.getMergedFile());
 

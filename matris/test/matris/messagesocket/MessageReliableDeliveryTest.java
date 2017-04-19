@@ -21,7 +21,7 @@ public class MessageReliableDeliveryTest {
 
 		TestMessage message = new TestMessage();
 		message.setDestination(new MessageAddress("localhost", 4321));
-		message.setAckRequired(true);
+		message.setReliable(true);
 
 		sender.send(message);
 

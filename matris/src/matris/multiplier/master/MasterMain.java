@@ -7,6 +7,7 @@ import matris.cluster.coordinator.Coordinator;
 import matris.common.Task;
 import matris.common.TaskListener;
 import matris.common.TaskSet;
+import matris.ftp.FileReceiver;
 import matris.tools.Util;
 
 public class MasterMain extends Coordinator {
@@ -14,6 +15,9 @@ public class MasterMain extends Coordinator {
 	private File inputDir = new File("input");
 	private File processDir = new File("process");
 	private File outputDir = new File("output");
+	private File receiveDir = new File("receive");
+
+	private FileReceiver fileReceiver;
 
 	public MasterMain(int port) throws IOException {
 
@@ -21,10 +25,14 @@ public class MasterMain extends Coordinator {
 
 		Util.remove(processDir);
 		Util.remove(outputDir);
+		Util.remove(receiveDir);
 
 		inputDir.mkdirs();
 		processDir.mkdirs();
 		outputDir.mkdirs();
+		receiveDir.mkdirs();
+
+		fileReceiver = new FileReceiver(socket, receiveDir);
 
 		start();
 	}
@@ -41,7 +49,8 @@ public class MasterMain extends Coordinator {
 
 				if (file.isFile()) {
 
-					MultiplicationTask task = new MultiplicationTask(taskId++, file, socket, getWorkers());
+					MultiplicationTask task = new MultiplicationTask(taskId++, file, socket, getWorkers(), outputDir,
+							fileReceiver);
 
 					task.addListener(new TaskListener() {
 

@@ -27,7 +27,7 @@ public abstract class Message implements Serializable {
 
 	private int messageCode;
 
-	private byte ackRequired;
+	private byte reliable;
 
 	private long lastSendTime;
 
@@ -42,7 +42,7 @@ public abstract class Message implements Serializable {
 			nextId.set(0);
 		}
 
-		setAckRequired(false);
+		setReliable(false);
 	}
 
 	public int getMessageId() {
@@ -106,14 +106,14 @@ public abstract class Message implements Serializable {
 		return messageCode;
 	}
 
-	public boolean isAckRequired() {
+	public boolean isReliable() {
 
-		return ackRequired == 1;
+		return reliable == 1;
 	}
 
-	public void setAckRequired(boolean ackRequired) {
+	public void setReliable(boolean reliable) {
 
-		this.ackRequired = (byte) (ackRequired ? 1 : 0);
+		this.reliable = (byte) (reliable ? 1 : 0);
 	}
 
 	public long getLastSendTime() {
@@ -137,7 +137,7 @@ public abstract class Message implements Serializable {
 		ByteBuffer buffer = ByteBuffer.wrap(result);
 		buffer.putInt(message.messageCode);
 		buffer.putInt(message.srcPort);
-		buffer.put(message.ackRequired);
+		buffer.put(message.reliable);
 		buffer.putInt(message.messageId);
 
 		message.serialize(buffer);
@@ -158,7 +158,7 @@ public abstract class Message implements Serializable {
 			Message result = messageCode.getMessageType().newInstance();
 
 			result.srcPort = buffer.getInt();
-			result.ackRequired = buffer.get();
+			result.reliable = buffer.get();
 			result.messageId = buffer.getInt();
 
 			result.deserialize(buffer);

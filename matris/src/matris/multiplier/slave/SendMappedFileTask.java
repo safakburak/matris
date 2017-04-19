@@ -67,7 +67,7 @@ public class SendMappedFileTask extends Task {
 					reduceInfo.setReductionNo(reductionNo);
 
 					reduceInfo.setDestination(to);
-					reduceInfo.setAckRequired(true);
+					reduceInfo.setReliable(true);
 
 					socket.send(reduceInfo);
 
