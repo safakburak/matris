@@ -26,11 +26,23 @@ public class FileSendTask extends Task implements MessageSocketListener {
 
 	public FileSendTask(MessageSocket socket, File file, MessageAddress to) {
 
+		this(socket, file, to, null);
+	}
+
+	public FileSendTask(MessageSocket socket, File file, MessageAddress to, Integer extraId) {
+
 		this.socket = socket;
 		this.file = file;
 		this.to = to;
 
-		fileId = (file.getAbsolutePath() + to).hashCode();
+		if (extraId == null) {
+
+			fileId = (file.getAbsolutePath() + to).hashCode();
+
+		} else {
+
+			fileId = (file.getAbsolutePath() + to + extraId).hashCode();
+		}
 
 		this.socket.addListener(this);
 	}

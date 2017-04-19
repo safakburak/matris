@@ -3,6 +3,7 @@ package matris.ftp;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -14,6 +15,7 @@ import matris.messagesocket.Message;
 import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
 import matris.messagesocket.MessageSocketListener;
+import matris.tools.Util;
 
 public class FileReceiver {
 
@@ -52,6 +54,39 @@ public class FileReceiver {
 		return receivedFiles.get(fileId);
 	}
 
+	public boolean contains(int fileId) {
+
+		return receivedFiles.containsKey(fileId);
+	}
+
+	public void removeFile(int fileId) {
+
+		File file = receivedFiles.remove(fileId);
+		receivedPartsCounts.remove(fileId);
+
+		Util.remove(file);
+	}
+
+	public void removeFile(File file) {
+
+		boolean found = false;
+		int index = 0;
+
+		for (Entry<Integer, File> e : receivedFiles.entrySet()) {
+
+			if (e.getValue() == file) {
+
+				found = true;
+				index = e.getKey();
+			}
+		}
+
+		if (found) {
+
+			removeFile(index);
+		}
+	}
+
 	private void onFilePart(MsgFilePart filePart) {
 
 		receivedPartsCounts.putIfAbsent(filePart.getFileId(), new AtomicLong());
@@ -71,7 +106,10 @@ public class FileReceiver {
 			File mergedFile = new File(receiveDir.getPath() + "/" + "file_" + from.getHost() + "_" + from.getPort()
 					+ "_" + filePart.getFileId());
 
-			if (partFile.exists() == false && mergedFile.exists() == false) {
+			AtomicLong partCounter = receivedPartsCounts.get(filePart.getFileId());
+
+			if (partFile.exists() == false && mergedFile.exists() == false
+					&& partCounter.get() < filePart.getPartCount()) {
 
 				partFile.createNewFile();
 
@@ -80,8 +118,6 @@ public class FileReceiver {
 				outputStream.write(filePart.getData());
 				outputStream.flush();
 				outputStream.close();
-
-				AtomicLong partCounter = receivedPartsCounts.get(filePart.getFileId());
 
 				long partCount = partCounter.incrementAndGet();
 

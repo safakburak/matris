@@ -3,6 +3,7 @@ package matris.multiplier.slave;
 import java.io.File;
 import java.io.IOException;
 import java.net.SocketException;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import matris.cluster.worker.Worker;
@@ -69,39 +70,59 @@ public class SlaveMain extends Worker implements MessageSocketListener {
 
 			MsgDone done = (MsgDone) message;
 
-			// TODO clear
+			taskReduceMapFiles.remove(done.getTaskId());
+
+			for (Entry<File, MapTask> e : mapTasks.entrySet()) {
+
+				if (e.getValue().getTaskId() == done.getTaskId()) {
+
+					mapTasks.remove(e.getKey());
+
+					Util.remove(e.getValue().getMapDir());
+				}
+			}
 		}
 	}
 
 	private void handleReduceInfo(MsgReduceInfo info) {
 
-		taskReduceMapFiles.putIfAbsent(info.getTaskId(), new ConcurrentHashMap<>());
+		if (fileReceiver.contains(info.getRemoteFileId())) {
 
-		ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, File>> reductionFiles = taskReduceMapFiles
-				.get(info.getTaskId());
+			taskReduceMapFiles.putIfAbsent(info.getTaskId(), new ConcurrentHashMap<>());
 
-		reductionFiles.putIfAbsent(info.getReductionNo(), new ConcurrentHashMap<>());
+			ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, File>> reductionFiles = taskReduceMapFiles
+					.get(info.getTaskId());
 
-		ConcurrentHashMap<Integer, File> partFiles = reductionFiles.get(info.getReductionNo());
+			reductionFiles.putIfAbsent(info.getReductionNo(), new ConcurrentHashMap<>());
 
-		File prevFile = partFiles.putIfAbsent(info.getPartNo(), fileReceiver.getFile(info.getRemoteFileId()));
+			ConcurrentHashMap<Integer, File> partFiles = reductionFiles.get(info.getReductionNo());
 
-		if (prevFile == null && partFiles.size() == info.getPartCount()) {
+			File prevFile = partFiles.putIfAbsent(info.getPartNo(), fileReceiver.getFile(info.getRemoteFileId()));
 
-			ReduceTask reduceTask = new ReduceTask(socket, partFiles.values(), info.getQ(), info.getTaskId(), rootDir,
-					info.getOwner(), info.getReductionNo());
+			if (prevFile == null && partFiles.size() == info.getPartCount()) {
 
-			reduceTask.addListener(new TaskListener() {
+				ReduceTask reduceTask = new ReduceTask(socket, partFiles.values(), info.getQ(), info.getTaskId(),
+						rootDir, info.getOwner(), info.getReductionNo());
 
-				@Override
-				public void onComplete(Task task, boolean success) {
+				reduceTask.addListener(new TaskListener() {
 
-					System.out.println(name + " completed reduction for task " + info.getTaskId() + " reduction "
-							+ info.getReductionNo());
-				}
-			});
+					@Override
+					public void onComplete(Task task, boolean success) {
 
-			reduceTask.start();
+						System.out.println(name + " completed reduction for task " + info.getTaskId() + " reduction "
+								+ info.getReductionNo());
+
+						ReduceTask cTask = (ReduceTask) task;
+
+						for (File f : cTask.getFiles()) {
+
+							fileReceiver.removeFile(f);
+						}
+					}
+				});
+
+				reduceTask.start();
+			}
 		}
 	}
 
@@ -125,15 +146,15 @@ public class SlaveMain extends Worker implements MessageSocketListener {
 
 					MapTask mapTask = (MapTask) task;
 
-					mapTasks.remove(mapTask.getFile());
-
 					System.out.println(name + " completed mapping!");
+
+					fileReceiver.removeFile(mapTask.getHostsFile());
+					fileReceiver.removeFile(mapTask.getInputFile());
 				}
 			});
 
 			mapTask.start();
 		}
-
 	}
 
 	public static void main(String[] args) throws NumberFormatException, IOException {

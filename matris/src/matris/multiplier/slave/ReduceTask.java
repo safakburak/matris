@@ -52,6 +52,11 @@ public class ReduceTask extends Task {
 		return taskId;
 	}
 
+	public File[] getFiles() {
+
+		return files;
+	}
+
 	@Override
 	protected void doTask() {
 
@@ -177,5 +182,11 @@ public class ReduceTask extends Task {
 		});
 
 		sendTask.start();
+	}
+
+	@Override
+	protected void clean() {
+
+		Util.remove(reduceDir);
 	}
 }

@@ -56,7 +56,7 @@ public class InputPartSendTask extends Task {
 
 					File hostsFile = new File("hosts.txt");
 
-					FileSendTask hostsSendTask = new FileSendTask(socket, hostsFile, worker);
+					FileSendTask hostsSendTask = new FileSendTask(socket, hostsFile, worker, taskId);
 
 					hostsSendTask.addListener(new TaskListener() {
 

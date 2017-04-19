@@ -58,7 +58,12 @@ public class MapTask extends Task {
 		this.partNo = partNo;
 	}
 
-	public File getFile() {
+	public File getHostsFile() {
+
+		return hostsFile;
+	}
+
+	public File getInputFile() {
 
 		return inputFile;
 	}
@@ -66,6 +71,11 @@ public class MapTask extends Task {
 	public int getTaskId() {
 
 		return taskId;
+	}
+
+	public File getMapDir() {
+
+		return mapDir;
 	}
 
 	@Override
