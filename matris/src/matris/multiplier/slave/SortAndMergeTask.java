@@ -88,6 +88,8 @@ public class SortAndMergeTask extends Task {
 				}
 			}
 
+			reader.close();
+
 			if (lines.size() > 0) {
 
 				lines.sort(new ReduceRowComparator());

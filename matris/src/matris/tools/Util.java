@@ -7,7 +7,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 
 import matris.messagesocket.MessageAddress;
 
@@ -72,32 +71,6 @@ public class Util {
 		reader.close();
 
 		return hosts.toArray(new MessageAddress[] {});
-	}
-
-	private static List<File> merge(List<File> files, Comparator<String> comparator) throws IOException {
-
-		if (files.size() == 1) {
-
-			return files;
-
-		} else {
-
-			List<File> result = new ArrayList<>();
-
-			for (int i = 0; i < files.size(); i += 2) {
-
-				if ((i + 1) < files.size()) {
-
-					result.add(merge(files.get(i), files.get(i + 1), comparator));
-
-				} else {
-
-					result.add(files.get(i));
-				}
-			}
-
-			return merge(result, comparator);
-		}
 	}
 
 	public static File merge(File file1, File file2, Comparator<String> comparator) throws IOException {
