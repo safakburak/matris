@@ -8,7 +8,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import matris.ftp.FileReceiver;
 import matris.messages.MsgDone;
@@ -43,9 +45,11 @@ public class MultiplicationTask extends Task implements MessageSocketListener {
 
 	private List<File> inputParts;
 
-	private ConcurrentHashMap<File, InputPartSendTask> distributeTasks = new ConcurrentHashMap<>();
+	private ConcurrentHashMap<File, InputPartSendTask> inputPartSendTasks = new ConcurrentHashMap<>();
 
 	private ConcurrentHashMap<Integer, File> reducedParts = new ConcurrentHashMap<>();
+
+	private AtomicBoolean partitionCompleted = new AtomicBoolean(false);
 
 	public MultiplicationTask(int taskId, File inputFile, MessageSocket socket, List<MessageAddress> workers,
 			File outputDir, FileReceiver fileReceiver, File processDir) {
@@ -74,11 +78,11 @@ public class MultiplicationTask extends Task implements MessageSocketListener {
 
 				File inputPart = inputParts.get(i);
 
-				MessageAddress worker = workers.get(i % workers.size());
+				MessageAddress worker = workers.get(i);
 
 				InputPartSendTask distributeTask = new InputPartSendTask(socket, worker, inputPart, taskId, p, q, r, i);
 
-				distributeTasks.put(inputPart, distributeTask);
+				inputPartSendTasks.put(inputPart, distributeTask);
 
 				distributeTask.start();
 			}
@@ -203,5 +207,31 @@ public class MultiplicationTask extends Task implements MessageSocketListener {
 	protected void clean() {
 
 		socket.removeListener(this);
+	}
+
+	public void replaceWorker(MessageAddress deadWorker, MessageAddress newWorker) {
+
+		// wait for partitioning to complete
+		while (partitionCompleted.get() == false) {
+
+			Util.sleepSilent(10);
+		}
+
+		for (Entry<File, InputPartSendTask> e : inputPartSendTasks.entrySet()) {
+
+			if (e.getValue().getWorker().equals(deadWorker)) {
+
+				InputPartSendTask oldTask = e.getValue();
+
+				InputPartSendTask newTask = new InputPartSendTask(socket, newWorker, oldTask.getInputPart(), taskId, p,
+						q, r, oldTask.getPartNo());
+
+				inputPartSendTasks.put(oldTask.getInputPart(), newTask);
+
+				oldTask.cancel();
+
+				newTask.start();
+			}
+		}
 	}
 }

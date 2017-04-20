@@ -29,6 +29,8 @@ public class SendMappedFileTask extends Task {
 
 	private int reductionNo;
 
+	FileSendTask sendTask;
+
 	public SendMappedFileTask(MessageSocket socket, MessageAddress to, File file, int taskId, MessageAddress owner,
 			int q, int partNo, int partCount, int reductionNo) {
 
@@ -43,10 +45,20 @@ public class SendMappedFileTask extends Task {
 		this.reductionNo = reductionNo;
 	}
 
+	public MessageAddress getTo() {
+
+		return to;
+	}
+
+	public int getReductionNo() {
+
+		return reductionNo;
+	}
+
 	@Override
 	protected void doTask() {
 
-		FileSendTask sendTask = new FileSendTask(socket, file, to);
+		sendTask = new FileSendTask(socket, file, to);
 
 		sendTask.then(new TaskCallback() {
 
@@ -77,5 +89,11 @@ public class SendMappedFileTask extends Task {
 		});
 
 		sendTask.start();
+	}
+
+	@Override
+	protected void clean() {
+
+		sendTask.cancel();
 	}
 }

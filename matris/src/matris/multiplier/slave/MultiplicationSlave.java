@@ -10,6 +10,7 @@ import matris.ftp.FileReceiver;
 import matris.messages.MsgDone;
 import matris.messages.MsgMapInfo;
 import matris.messages.MsgReduceInfo;
+import matris.messages.MsgWorkerReplacement;
 import matris.messagesocket.Message;
 import matris.messagesocket.MessageSocketListener;
 import matris.task.Task;
@@ -78,6 +79,24 @@ public class MultiplicationSlave extends Worker implements MessageSocketListener
 					Util.remove(e.getValue().getMapDir());
 				}
 			}
+
+		} else if (message instanceof MsgWorkerReplacement) {
+
+			MsgWorkerReplacement workerReplacement = (MsgWorkerReplacement) message;
+
+			handleWorkerReplacement(workerReplacement);
+		}
+	}
+
+	private void handleWorkerReplacement(MsgWorkerReplacement workerReplacement) {
+
+		socket.cancelAddress(workerReplacement.getDeadWorker());
+
+		for (Entry<File, MapTask> e : mapTasks.entrySet()) {
+
+			MapTask mapTask = e.getValue();
+
+			mapTask.replaceWorker(workerReplacement.getDeadWorker(), workerReplacement.getNewWorker());
 		}
 	}
 
@@ -133,8 +152,8 @@ public class MultiplicationSlave extends Worker implements MessageSocketListener
 
 		if (inputFile != null && hostsFile != null) {
 
-			MapTask mapTask = new MapTask(socket, info.getSrcAddress(), info.getTaskId(), inputFile, hostsFile,
-					info.getP(), info.getQ(), info.getR(), rootDir, info.getPartNo());
+			MapTask mapTask = new MapTask(socket, info.getSource(), info.getTaskId(), inputFile, hostsFile, info.getP(),
+					info.getQ(), info.getR(), rootDir, info.getPartNo());
 
 			MapTask prev = mapTasks.putIfAbsent(inputFile, mapTask);
 

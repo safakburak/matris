@@ -7,6 +7,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 import matris.messagesocket.MessageAddress;
 
@@ -49,7 +50,7 @@ public class Util {
 		}
 	}
 
-	public static MessageAddress[] parseHostsFile(File file) throws NumberFormatException, IOException {
+	public static List<MessageAddress> parseHostsFile(File file) throws NumberFormatException, IOException {
 
 		BufferedReader reader = new BufferedReader(new FileReader(file));
 
@@ -70,7 +71,7 @@ public class Util {
 
 		reader.close();
 
-		return hosts.toArray(new MessageAddress[] {});
+		return hosts;
 	}
 
 	public static File merge(File file1, File file2, Comparator<String> comparator) throws IOException {

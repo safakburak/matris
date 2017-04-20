@@ -6,14 +6,15 @@ import matris.messagesocket.TestMessage;
 public enum OpCode {
 
 	ack(MsgAck.class),
+	done(MsgDone.class),
 	ping(MsgPing.class),
 	filePart(MsgFilePart.class),
-	mapStart(MsgMapInfo.class),
 	fileReceived(MsgFileReceived.class),
-	test(TestMessage.class),
-	reduceInfo(MsgReduceInfo.class),
+	mapStart(MsgMapInfo.class),
 	reduceComplete(MsgReduceComplete.class),
-	done(MsgDone.class);
+	reduceInfo(MsgReduceInfo.class),
+	test(TestMessage.class),
+	workerDown(MsgWorkerReplacement.class);
 
 	private Class<? extends Message> messageType;
 

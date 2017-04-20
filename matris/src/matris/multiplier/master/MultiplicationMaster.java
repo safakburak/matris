@@ -4,11 +4,14 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import matris.cluster.coordinator.Coordinator;
 import matris.ftp.FileReceiver;
+import matris.messages.MsgWorkerReplacement;
+import matris.messagesocket.MessageAddress;
 import matris.task.Task;
 import matris.tools.Util;
 
@@ -21,7 +24,7 @@ public class MultiplicationMaster extends Coordinator {
 
 	private FileReceiver fileReceiver;
 
-	private ConcurrentHashMap<Integer, MultiplicationTask> tasks = new ConcurrentHashMap<>();
+	private ConcurrentHashMap<Integer, MultiplicationTask> multiplicationTasks = new ConcurrentHashMap<>();
 
 	public MultiplicationMaster(int port, File inputDir) throws IOException {
 
@@ -69,10 +72,10 @@ public class MultiplicationMaster extends Coordinator {
 
 					taskId++;
 
-					MultiplicationTask task = new MultiplicationTask(taskName.hashCode(), file, socket, getWorkers(),
-							outputDir, fileReceiver, processDir);
+					MultiplicationTask task = new MultiplicationTask(taskName.hashCode(), file, socket,
+							getAliveWorkers(), outputDir, fileReceiver, processDir);
 
-					tasks.put(task.getTaskId(), task);
+					multiplicationTasks.put(task.getTaskId(), task);
 
 					task.then(this::onMultiplicationTaskComplete, file);
 
@@ -100,7 +103,7 @@ public class MultiplicationMaster extends Coordinator {
 
 		boolean completed = true;
 
-		for (MultiplicationTask task : tasks.values()) {
+		for (MultiplicationTask task : multiplicationTasks.values()) {
 
 			if (task.isCompleted() == false) {
 
@@ -118,5 +121,63 @@ public class MultiplicationMaster extends Coordinator {
 
 			stop();
 		}
+	}
+
+	@Override
+	protected void onWorkerDown(MessageAddress deadWorker) {
+
+		socket.cancelAddress(deadWorker);
+
+		MessageAddress replacement = null;
+
+		List<MessageAddress> workers = getWorkers();
+
+		for (int i = workers.indexOf(deadWorker) + 1; i < workers.size(); i++) {
+
+			MessageAddress candidate = workers.get(i % workers.size());
+
+			if (candidate == deadWorker) {
+
+				break;
+			}
+
+			if (isWorkerUp(candidate) == true) {
+
+				replacement = candidate;
+
+				break;
+			}
+		}
+
+		if (replacement == null) {
+
+			// all workers dead!
+
+			System.out.println("All workers dead!");
+
+			System.exit(0);
+
+		}
+
+		for (MultiplicationTask task : multiplicationTasks.values()) {
+
+			task.replaceWorker(deadWorker, replacement);
+		}
+
+		for (MessageAddress worker : getAliveWorkers()) {
+
+			MsgWorkerReplacement msgWorkerDown = new MsgWorkerReplacement();
+			msgWorkerDown.setDeadWorker(deadWorker);
+			msgWorkerDown.setUrgent(true);
+			msgWorkerDown.setReliable(true);
+			msgWorkerDown.setDestination(worker);
+
+			socket.send(msgWorkerDown);
+		}
+	}
+
+	@Override
+	protected void onWorkerUp(MessageAddress address) {
+
 	}
 }

@@ -118,6 +118,11 @@ public class FileSendTask extends Task implements MessageSocketListener {
 				filePart.setReliable(true);
 
 				socket.send(filePart);
+
+				if (isCompleted()) {
+
+					break;
+				}
 			}
 
 		} catch (IOException exception) {

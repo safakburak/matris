@@ -109,4 +109,9 @@ public abstract class Task {
 
 		return completed.get();
 	}
+
+	public void cancel() {
+
+		fail();
+	}
 }

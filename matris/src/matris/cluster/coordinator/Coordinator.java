@@ -53,11 +53,11 @@ public class Coordinator {
 			@Override
 			public void onMessage(Message message) {
 
-				workerPingTimes.put(message.getSrcAddress(), System.currentTimeMillis());
+				workerPingTimes.put(message.getSource(), System.currentTimeMillis());
 			}
 		});
 
-		MessageAddress[] wokers = Util.parseHostsFile(new File("hosts.txt"));
+		List<MessageAddress> wokers = Util.parseHostsFile(new File("hosts.txt"));
 
 		for (MessageAddress worker : wokers) {
 
@@ -111,9 +111,17 @@ public class Coordinator {
 		}
 	}
 
-	public List<MessageAddress> getWorkers() {
+	public List<MessageAddress> getAliveWorkers() {
 
-		ArrayList<MessageAddress> result = new ArrayList<>(workerStates.keySet());
+		ArrayList<MessageAddress> result = new ArrayList<>();
+
+		for (Entry<MessageAddress, Boolean> e : workerStates.entrySet()) {
+
+			if (e.getValue() == true) {
+
+				result.add(e.getKey());
+			}
+		}
 
 		return result;
 	}
@@ -144,5 +152,15 @@ public class Coordinator {
 
 		stop = true;
 		socket.stop();
+	}
+
+	protected boolean isWorkerUp(MessageAddress worker) {
+
+		return workerStates.get(worker);
+	}
+
+	protected List<MessageAddress> getWorkers() {
+
+		return new ArrayList<>(workerStates.keySet());
 	}
 }

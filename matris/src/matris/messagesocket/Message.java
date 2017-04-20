@@ -78,6 +78,11 @@ public abstract class Message implements Serializable {
 		this.destPort = address.getPort();
 	}
 
+	public MessageAddress getDestination() {
+
+		return new MessageAddress(destHost, destPort);
+	}
+
 	public String getSrcHost() {
 
 		return srcHost;
@@ -98,7 +103,7 @@ public abstract class Message implements Serializable {
 		this.srcPort = srcPort;
 	}
 
-	public MessageAddress getSrcAddress() {
+	public MessageAddress getSource() {
 
 		return new MessageAddress(srcHost, srcPort);
 	}

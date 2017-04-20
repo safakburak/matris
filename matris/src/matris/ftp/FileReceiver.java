@@ -93,7 +93,7 @@ public class FileReceiver {
 
 		try {
 
-			MessageAddress from = filePart.getSrcAddress();
+			MessageAddress from = filePart.getSource();
 
 			String fileName = "file_" + from.getHost() + "_" + from.getPort() + "_" + filePart.getFileId() + "_"
 					+ filePart.getPartIndex();
@@ -123,7 +123,7 @@ public class FileReceiver {
 
 					if (partCount == filePart.getPartCount()) {
 
-						FileMergeTask mergeTask = new FileMergeTask(filePart.getSrcAddress(), filePart.getFileId(),
+						FileMergeTask mergeTask = new FileMergeTask(filePart.getSource(), filePart.getFileId(),
 								filePart.getPartCount(), receiveDir);
 
 						mergeTask.then(this::onFileMergeTaskComplete, filePart);
@@ -156,7 +156,7 @@ public class FileReceiver {
 			fileReceived.setFileId(filePart.getFileId());
 			fileReceived.setRemoteFileId(fileId);
 
-			fileReceived.setDestination(filePart.getSrcAddress());
+			fileReceived.setDestination(filePart.getSource());
 			fileReceived.setReliable(true);
 
 			receivedFiles.put(fileId, mergeTask.getMergedFile());

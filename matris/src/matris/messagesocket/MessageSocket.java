@@ -131,6 +131,11 @@ public class MessageSocket {
 			return;
 		}
 
+		if (cancelledAddresses.contains(message.getSource())) {
+
+			return;
+		}
+
 		if (message.isUrgent()) {
 
 			outbox.addFirst(message);

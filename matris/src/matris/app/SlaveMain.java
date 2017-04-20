@@ -2,6 +2,7 @@ package matris.app;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import matris.messagesocket.MessageAddress;
 import matris.multiplier.slave.MultiplicationSlave;
@@ -17,11 +18,11 @@ public class SlaveMain {
 
 		dir.mkdir();
 
-		MessageAddress[] slaves = Util.parseHostsFile(new File("hosts.txt"));
+		List<MessageAddress> slaves = Util.parseHostsFile(new File("hosts.txt"));
 
-		for (int i = 0; i < slaves.length; i++) {
+		for (int i = 0; i < slaves.size(); i++) {
 
-			new MultiplicationSlave("slave_" + i, dir, slaves[i].getPort());
+			new MultiplicationSlave("slave_" + i, dir, slaves.get(i).getPort());
 		}
 	}
 }

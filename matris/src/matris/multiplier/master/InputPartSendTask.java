@@ -24,6 +24,10 @@ public class InputPartSendTask extends Task {
 
 	private int partNo;
 
+	private FileSendTask inputSendTask;
+
+	private FileSendTask hostsSendTask;
+
 	public InputPartSendTask(MessageSocket socket, MessageAddress worker, File inputPart, int taskId, int p, int q,
 			int r, int partNo) {
 
@@ -37,10 +41,25 @@ public class InputPartSendTask extends Task {
 		this.partNo = partNo;
 	}
 
+	public MessageAddress getWorker() {
+
+		return worker;
+	}
+
+	public File getInputPart() {
+
+		return inputPart;
+	}
+
+	public int getPartNo() {
+
+		return partNo;
+	}
+
 	@Override
 	protected void doTask() {
 
-		FileSendTask inputSendTask = new FileSendTask(socket, inputPart, worker);
+		inputSendTask = new FileSendTask(socket, inputPart, worker);
 
 		inputSendTask.then(this::onInputSendTaskComplete);
 
@@ -57,7 +76,7 @@ public class InputPartSendTask extends Task {
 
 			File hostsFile = new File("hosts.txt");
 
-			FileSendTask hostsSendTask = new FileSendTask(socket, hostsFile, worker, taskId);
+			hostsSendTask = new FileSendTask(socket, hostsFile, worker, taskId);
 
 			hostsSendTask.then(this::onFileSendTaskComplete);
 
@@ -94,6 +113,20 @@ public class InputPartSendTask extends Task {
 		} else {
 
 			fail();
+		}
+	}
+
+	@Override
+	protected void clean() {
+
+		if (inputSendTask != null) {
+
+			inputSendTask.cancel();
+		}
+
+		if (hostsSendTask != null) {
+
+			hostsSendTask.cancel();
 		}
 	}
 }

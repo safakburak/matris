@@ -5,12 +5,15 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
 import matris.task.Task;
 import matris.task.TaskCallback;
-import matris.task.TaskSet;
 import matris.tools.Util;
 
 public class MapTask extends Task {
@@ -37,11 +40,15 @@ public class MapTask extends Task {
 
 	private File mapDir;
 
-	private MessageAddress[] workers;
+	private List<MessageAddress> workers;
 
 	private File[] mappedFiles;
 
 	private int partNo;
+
+	private AtomicBoolean mappingCompleted = new AtomicBoolean(false);
+
+	private ConcurrentHashMap<File, SendMappedFileTask> sendTasks = new ConcurrentHashMap<>();
 
 	public MapTask(MessageSocket socket, MessageAddress owner, int taskId, File inputFile, File hostsFile, int p, int q,
 			int r, File rootDir, int partNo) {
@@ -90,29 +97,26 @@ public class MapTask extends Task {
 
 			map();
 
-			TaskSet mapFileSendTasks = new TaskSet();
+			mappingCompleted.set(true);
 
 			for (int i = 0; i < mappedFiles.length; i++) {
 
-				SendMappedFileTask task = new SendMappedFileTask(socket, workers[i], mappedFiles[i], taskId, owner, q,
-						partNo, workers.length, i);
+				SendMappedFileTask task = new SendMappedFileTask(socket, workers.get(i), mappedFiles[i], taskId, owner,
+						q, partNo, workers.size(), i);
 
-				mapFileSendTasks.addTask(task);
-			}
+				sendTasks.put(mappedFiles[i], task);
 
-			mapFileSendTasks.then(new TaskCallback() {
+				task.then(new TaskCallback() {
 
-				@Override
-				public void onComplete(Task task, boolean success) {
+					@Override
+					public void onComplete(Task task, boolean success) {
 
-					if (success) {
-
-						done();
+						checkForCompletion();
 					}
-				}
-			});
+				});
 
-			mapFileSendTasks.start();
+				task.start();
+			}
 
 		} catch (IOException e) {
 
@@ -122,10 +126,30 @@ public class MapTask extends Task {
 		}
 	}
 
+	private void checkForCompletion() {
+
+		boolean completed = true;
+
+		for (SendMappedFileTask task : sendTasks.values()) {
+
+			if (task.isCompleted() == false) {
+
+				completed = false;
+
+				break;
+			}
+		}
+
+		if (completed) {
+
+			done();
+		}
+	}
+
 	private void map() throws IOException {
 
-		writers = new FileWriter[workers.length];
-		mappedFiles = new File[workers.length];
+		writers = new FileWriter[workers.size()];
+		mappedFiles = new File[workers.size()];
 
 		for (int i = 0; i < writers.length; i++) {
 
@@ -184,5 +208,31 @@ public class MapTask extends Task {
 
 		writer.write(tRow + " " + tCol + " " + matrix + " " + order + " " + val + "\n");
 		writer.flush();
+	}
+
+	public void replaceWorker(MessageAddress deadWorker, MessageAddress newWorker) {
+
+		// wait for mapping to complete
+		while (mappingCompleted.get() == false) {
+
+			Util.sleepSilent(10);
+		}
+
+		for (Entry<File, SendMappedFileTask> e : sendTasks.entrySet()) {
+
+			if (e.getValue().getTo().equals(deadWorker)) {
+
+				SendMappedFileTask oldTask = e.getValue();
+
+				SendMappedFileTask newTask = new SendMappedFileTask(socket, newWorker, e.getKey(), taskId, owner, q,
+						partNo, workers.size(), oldTask.getReductionNo());
+
+				sendTasks.put(e.getKey(), newTask);
+
+				oldTask.cancel();
+
+				newTask.start();
+			}
+		}
 	}
 }

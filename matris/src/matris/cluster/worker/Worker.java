@@ -25,7 +25,7 @@ public class Worker {
 				if (pingEnable && message instanceof MsgPing) {
 
 					MsgPing msgPing = (MsgPing) message;
-					msgPing.setDestination(message.getSrcAddress());
+					msgPing.setDestination(message.getSource());
 					msgPing.setUrgent(true);
 
 					socket.send(msgPing);

@@ -32,7 +32,7 @@ public class CoordinatorTest {
 
 		JOptionPane.showMessageDialog(null, "Bütün workerları ayağa kaldırıyorum!");
 
-		for (MessageAddress address : coordinator.getWorkers()) {
+		for (MessageAddress address : coordinator.getAliveWorkers()) {
 
 			Worker worker = new Worker(address.getPort());
 
