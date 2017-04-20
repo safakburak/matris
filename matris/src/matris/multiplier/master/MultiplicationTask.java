@@ -17,7 +17,7 @@ import matris.messagesocket.Message;
 import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
 import matris.messagesocket.MessageSocketListener;
-import matris.multiplier.common.MergeListTask;
+import matris.multiplier.common.MergeFileListTask;
 import matris.task.Task;
 import matris.tools.Util;
 
@@ -159,7 +159,7 @@ public class MultiplicationTask extends Task implements MessageSocketListener {
 
 					List<File> partList = new ArrayList<>(reducedParts.values());
 
-					MergeListTask mergeListTask = new MergeListTask(partList, new ResultRowComparator());
+					MergeFileListTask mergeListTask = new MergeFileListTask(partList, new ResultRowComparator());
 
 					mergeListTask.then(this::onMergeListTaskComplete);
 
@@ -173,7 +173,7 @@ public class MultiplicationTask extends Task implements MessageSocketListener {
 
 		if (success) {
 
-			MergeListTask cTask = (MergeListTask) task;
+			MergeFileListTask cTask = (MergeFileListTask) task;
 
 			File result = new File(outputDir.getPath() + "/" + inputFile.getName() + "_output");
 

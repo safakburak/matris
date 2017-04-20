@@ -7,11 +7,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import matris.multiplier.common.MergeListTask;
+import matris.multiplier.common.MergeFileListTask;
 import matris.task.Task;
 import matris.tools.Util;
 
-public class SortAndMergeTask extends Task {
+public class SortTask extends Task {
 
 	private static final int SORTING_UNIT_SIZE = 1024;
 
@@ -23,7 +23,7 @@ public class SortAndMergeTask extends Task {
 
 	private File sortDir;
 
-	public SortAndMergeTask(File file, File parentDir) {
+	public SortTask(File file, File parentDir) {
 
 		this.file = file;
 
@@ -100,7 +100,7 @@ public class SortAndMergeTask extends Task {
 				units.add(out);
 			}
 
-			MergeListTask mergeListTask = new MergeListTask(units, new ReduceRowComparator());
+			MergeFileListTask mergeListTask = new MergeFileListTask(units, new ReduceRowComparator());
 
 			mergeListTask.then(this::onMergeListTaskComplete);
 
@@ -117,7 +117,7 @@ public class SortAndMergeTask extends Task {
 
 		if (success) {
 
-			MergeListTask cTask = (MergeListTask) task;
+			MergeFileListTask cTask = (MergeFileListTask) task;
 
 			sortedFile = new File(parentDir.getPath() + "/" + file.getName() + "_sorted");
 			cTask.getMergedFile().renameTo(sortedFile);

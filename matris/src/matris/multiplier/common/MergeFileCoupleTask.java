@@ -7,7 +7,7 @@ import java.util.Comparator;
 import matris.task.Task;
 import matris.tools.Util;
 
-public class MergeCoupleTask extends Task {
+public class MergeFileCoupleTask extends Task {
 
 	private File mergedFile;
 
@@ -17,7 +17,7 @@ public class MergeCoupleTask extends Task {
 
 	private Comparator<String> comparator;
 
-	public MergeCoupleTask(File file1, File file2, Comparator<String> comparator) {
+	public MergeFileCoupleTask(File file1, File file2, Comparator<String> comparator) {
 
 		this.file1 = file1;
 		this.file2 = file2;

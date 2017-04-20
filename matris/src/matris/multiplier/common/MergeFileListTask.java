@@ -8,7 +8,7 @@ import java.util.List;
 import matris.task.Task;
 import matris.task.TaskSet;
 
-public class MergeListTask extends Task {
+public class MergeFileListTask extends Task {
 
 	private File mergedFile;
 
@@ -16,7 +16,7 @@ public class MergeListTask extends Task {
 
 	private Comparator<String> comparator;
 
-	public MergeListTask(List<File> files, Comparator<String> comparator) {
+	public MergeFileListTask(List<File> files, Comparator<String> comparator) {
 
 		this.files = files;
 		this.comparator = comparator;
@@ -51,7 +51,7 @@ public class MergeListTask extends Task {
 
 				if ((i + 1) < parts.size()) {
 
-					MergeCoupleTask coupleTask = new MergeCoupleTask(parts.get(i), parts.get(i + 1), comparator);
+					MergeFileCoupleTask coupleTask = new MergeFileCoupleTask(parts.get(i), parts.get(i + 1), comparator);
 
 					taskSet.addTask(coupleTask);
 
@@ -78,7 +78,7 @@ public class MergeListTask extends Task {
 
 			for (Task t : cTask.getTasks()) {
 
-				result.add(((MergeCoupleTask) t).getMergedFile());
+				result.add(((MergeFileCoupleTask) t).getMergedFile());
 			}
 
 			merge(result);
