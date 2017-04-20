@@ -4,8 +4,8 @@
 **/bin/**
 matris/input
 matris/done
-matris/process
+matris/process*
 matris/slaves
-matris/receive
+matris/receive*
 matris/output*
 
