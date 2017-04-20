@@ -12,7 +12,7 @@ import org.junit.Test;
 import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
 import matris.task.Task;
-import matris.task.TaskListener;
+import matris.task.TaskCallback;
 import matris.tools.Util;
 
 public class FtpTest {
@@ -63,7 +63,7 @@ public class FtpTest {
 
 		FileSendTask sendTask1 = new FileSendTask(senderSocket, inputFile1, new MessageAddress("localhost", 4321));
 
-		sendTask1.addListener(new TaskListener() {
+		sendTask1.then(new TaskCallback() {
 
 			@Override
 			public void onComplete(Task task, boolean success) {
@@ -74,7 +74,7 @@ public class FtpTest {
 
 		FileSendTask sendTask2 = new FileSendTask(senderSocket, inputFile2, new MessageAddress("localhost", 4321));
 
-		sendTask2.addListener(new TaskListener() {
+		sendTask2.then(new TaskCallback() {
 
 			@Override
 			public void onComplete(Task task, boolean success) {

@@ -7,7 +7,7 @@ import matris.messages.MsgReduceInfo;
 import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
 import matris.task.Task;
-import matris.task.TaskListener;
+import matris.task.TaskCallback;
 
 public class SendMappedFileTask extends Task {
 
@@ -48,7 +48,7 @@ public class SendMappedFileTask extends Task {
 
 		FileSendTask sendTask = new FileSendTask(socket, file, to);
 
-		sendTask.addListener(new TaskListener() {
+		sendTask.then(new TaskCallback() {
 
 			@Override
 			public void onComplete(Task task, boolean success) {

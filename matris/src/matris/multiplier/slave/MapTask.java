@@ -9,7 +9,7 @@ import java.io.IOException;
 import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
 import matris.task.Task;
-import matris.task.TaskListener;
+import matris.task.TaskCallback;
 import matris.task.TaskSet;
 import matris.tools.Util;
 
@@ -100,7 +100,7 @@ public class MapTask extends Task {
 				mapFileSendTasks.addTask(task);
 			}
 
-			mapFileSendTasks.addListener(new TaskListener() {
+			mapFileSendTasks.then(new TaskCallback() {
 
 				@Override
 				public void onComplete(Task task, boolean success) {

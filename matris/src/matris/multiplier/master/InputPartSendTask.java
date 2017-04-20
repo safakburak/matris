@@ -7,7 +7,6 @@ import matris.messages.MsgMapInfo;
 import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
 import matris.task.Task;
-import matris.task.TaskListener;
 
 public class InputPartSendTask extends Task {
 
@@ -43,62 +42,58 @@ public class InputPartSendTask extends Task {
 
 		FileSendTask inputSendTask = new FileSendTask(socket, inputPart, worker);
 
-		inputSendTask.addListener(new TaskListener() {
-
-			@Override
-			public void onComplete(Task task, boolean success) {
-
-				if (success) {
-
-					FileSendTask cTask = (FileSendTask) task;
-
-					inputPartRemoteId = cTask.getRemoteFileId();
-
-					File hostsFile = new File("hosts.txt");
-
-					FileSendTask hostsSendTask = new FileSendTask(socket, hostsFile, worker, taskId);
-
-					hostsSendTask.addListener(new TaskListener() {
-
-						@Override
-						public void onComplete(Task task, boolean success) {
-
-							if (success) {
-
-								FileSendTask cTask = (FileSendTask) task;
-
-								MsgMapInfo start = new MsgMapInfo();
-								start.setTaskId(taskId);
-								start.setRemoteInputPartId(inputPartRemoteId);
-								start.setRemoteHostsFileId(cTask.getRemoteFileId());
-								start.setP(p);
-								start.setQ(q);
-								start.setR(r);
-								start.setPartNo(partNo);
-
-								start.setReliable(true);
-								start.setDestination(cTask.getTo());
-
-								socket.send(start);
-
-								done();
-
-							} else {
-
-								fail();
-							}
-						}
-					});
-
-					hostsSendTask.start();
-
-				} else {
-
-					fail();
-				}
-			}
-		});
+		inputSendTask.then(this::onInputSendTaskComplete);
 
 		inputSendTask.start();
+	}
+
+	private void onInputSendTaskComplete(Task task, boolean success) {
+
+		if (success) {
+
+			FileSendTask cTask = (FileSendTask) task;
+
+			inputPartRemoteId = cTask.getRemoteFileId();
+
+			File hostsFile = new File("hosts.txt");
+
+			FileSendTask hostsSendTask = new FileSendTask(socket, hostsFile, worker, taskId);
+
+			hostsSendTask.then(this::onFileSendTaskComplete);
+
+			hostsSendTask.start();
+
+		} else {
+
+			fail();
+		}
+	}
+
+	private void onFileSendTaskComplete(Task task, boolean success) {
+
+		if (success) {
+
+			FileSendTask cTask = (FileSendTask) task;
+
+			MsgMapInfo start = new MsgMapInfo();
+			start.setTaskId(taskId);
+			start.setRemoteInputPartId(inputPartRemoteId);
+			start.setRemoteHostsFileId(cTask.getRemoteFileId());
+			start.setP(p);
+			start.setQ(q);
+			start.setR(r);
+			start.setPartNo(partNo);
+
+			start.setReliable(true);
+			start.setDestination(cTask.getTo());
+
+			socket.send(start);
+
+			done();
+
+		} else {
+
+			fail();
+		}
 	}
 }

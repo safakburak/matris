@@ -10,7 +10,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import matris.cluster.coordinator.Coordinator;
 import matris.ftp.FileReceiver;
 import matris.task.Task;
-import matris.task.TaskListener;
 import matris.tools.Util;
 
 public class MasterMain extends Coordinator {
@@ -75,25 +74,25 @@ public class MasterMain extends Coordinator {
 
 					tasks.put(task.getTaskId(), task);
 
-					task.addListener(new TaskListener() {
-
-						@Override
-						public void onComplete(Task task, boolean success) {
-
-							if (success) {
-
-								checkForCompletion();
-
-							} else {
-
-								System.out.println("Multiplication tast FAILED for: " + file.getPath());
-							}
-						}
-					});
+					task.then(this::onMultiplicationTaskComplete, file);
 
 					task.start();
 				}
 			}
+		}
+	}
+
+	private void onMultiplicationTaskComplete(Task task, boolean success, Object data) {
+
+		if (success) {
+
+			checkForCompletion();
+
+		} else {
+
+			File file = (File) data;
+
+			System.out.println("Multiplication tast FAILED for: " + file.getPath());
 		}
 	}
 

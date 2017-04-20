@@ -16,7 +16,7 @@ public class TaskSet extends Task implements TaskListener {
 
 		tasks.add(task);
 
-		task.addListener(this);
+		task.then(this::onComplete);
 	}
 
 	@Override

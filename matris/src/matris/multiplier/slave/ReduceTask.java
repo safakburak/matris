@@ -14,7 +14,6 @@ import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
 import matris.multiplier.common.MergeListTask;
 import matris.task.Task;
-import matris.task.TaskListener;
 import matris.task.TaskSet;
 import matris.tools.Util;
 
@@ -70,60 +69,56 @@ public class ReduceTask extends Task {
 			sortTasks.addTask(sortTask);
 		}
 
-		sortTasks.addListener(new TaskListener() {
-
-			@Override
-			public void onComplete(Task task, boolean success) {
-
-				if (success) {
-
-					// files are sorted
-
-					TaskSet cTask = (TaskSet) task;
-
-					ArrayList<File> sortedFiles = new ArrayList<>();
-
-					for (Task t : cTask.getTasks()) {
-
-						SortAndMergeTask sortTask = (SortAndMergeTask) t;
-						sortedFiles.add(sortTask.getSortedFile());
-					}
-
-					MergeListTask mergeListTask = new MergeListTask(sortedFiles, new ReduceRowComparator());
-
-					mergeListTask.addListener(new TaskListener() {
-
-						@Override
-						public void onComplete(Task task, boolean success) {
-
-							if (success) {
-
-								MergeListTask cTask = (MergeListTask) task;
-
-								try {
-
-									reduce(cTask.getMergedFile());
-
-								} catch (IOException e) {
-
-									e.printStackTrace();
-
-									fail();
-								}
-
-							} else {
-
-								fail();
-							}
-						}
-					});
-
-					mergeListTask.start();
-				}
-			}
-		});
+		sortTasks.then(this::onSortTasksComplete);
 
 		sortTasks.start();
+	}
+
+	private void onSortTasksComplete(Task task, boolean success) {
+
+		if (success) {
+
+			// files are sorted
+
+			TaskSet cTask = (TaskSet) task;
+
+			ArrayList<File> sortedFiles = new ArrayList<>();
+
+			for (Task t : cTask.getTasks()) {
+
+				SortAndMergeTask sortTask = (SortAndMergeTask) t;
+				sortedFiles.add(sortTask.getSortedFile());
+			}
+
+			MergeListTask mergeListTask = new MergeListTask(sortedFiles, new ReduceRowComparator());
+
+			mergeListTask.then(this::onMergeListTaskComplete);
+
+			mergeListTask.start();
+		}
+	}
+
+	private void onMergeListTaskComplete(Task task, boolean success) {
+
+		if (success) {
+
+			MergeListTask cTask = (MergeListTask) task;
+
+			try {
+
+				reduce(cTask.getMergedFile());
+
+			} catch (IOException e) {
+
+				e.printStackTrace();
+
+				fail();
+			}
+
+		} else {
+
+			fail();
+		}
 	}
 
 	private void reduce(File file) throws IOException {
@@ -181,31 +176,29 @@ public class ReduceTask extends Task {
 
 		FileSendTask sendTask = new FileSendTask(socket, resultFile, owner);
 
-		sendTask.addListener(new TaskListener() {
-
-			@Override
-			public void onComplete(Task task, boolean success) {
-
-				if (success) {
-
-					FileSendTask cTask = (FileSendTask) task;
-
-					MsgReduceComplete reduceComplete = new MsgReduceComplete();
-					reduceComplete.setTaskId(taskId);
-					reduceComplete.setReductionNo(reductionNo);
-					reduceComplete.setRemoteFileId(cTask.getRemoteFileId());
-
-					reduceComplete.setDestination(owner);
-					reduceComplete.setReliable(true);
-
-					socket.send(reduceComplete);
-
-					done();
-				}
-			}
-		});
+		sendTask.then(this::onFileSendTaskComplete);
 
 		sendTask.start();
+	}
+
+	private void onFileSendTaskComplete(Task task, boolean success) {
+
+		if (success) {
+
+			FileSendTask cTask = (FileSendTask) task;
+
+			MsgReduceComplete reduceComplete = new MsgReduceComplete();
+			reduceComplete.setTaskId(taskId);
+			reduceComplete.setReductionNo(reductionNo);
+			reduceComplete.setRemoteFileId(cTask.getRemoteFileId());
+
+			reduceComplete.setDestination(owner);
+			reduceComplete.setReliable(true);
+
+			socket.send(reduceComplete);
+
+			done();
+		}
 	}
 
 	@Override

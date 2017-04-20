@@ -6,7 +6,6 @@ import java.util.Comparator;
 import java.util.List;
 
 import matris.task.Task;
-import matris.task.TaskListener;
 import matris.task.TaskSet;
 
 public class MergeListTask extends Task {
@@ -62,29 +61,31 @@ public class MergeListTask extends Task {
 				}
 			}
 
-			taskSet.addListener(new TaskListener() {
-				@Override
-				public void onComplete(Task task, boolean success) {
-
-					if (success) {
-
-						TaskSet cTask = (TaskSet) task;
-
-						for (Task t : cTask.getTasks()) {
-
-							result.add(((MergeCoupleTask) t).getMergedFile());
-						}
-
-						merge(result);
-
-					} else {
-
-						fail();
-					}
-				}
-			});
+			taskSet.then(this::onMergeComplete, result);
 
 			taskSet.start();
+		}
+	}
+
+	private void onMergeComplete(Task task, boolean success, Object data) {
+
+		if (success) {
+
+			@SuppressWarnings("unchecked")
+			List<File> result = (List<File>) data;
+
+			TaskSet cTask = (TaskSet) task;
+
+			for (Task t : cTask.getTasks()) {
+
+				result.add(((MergeCoupleTask) t).getMergedFile());
+			}
+
+			merge(result);
+
+		} else {
+
+			fail();
 		}
 	}
 }

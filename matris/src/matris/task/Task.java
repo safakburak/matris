@@ -1,19 +1,20 @@
 package matris.task;
 
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class Task {
 
 	private Thread taskThread;
 
-	private ConcurrentHashMap<TaskListener, Boolean> listeners = new ConcurrentHashMap<>();
-
 	private AtomicBoolean completed = new AtomicBoolean(false);
 
 	private boolean newThread;
 
 	private TaskCallback callback;
+
+	private TaskCallbackWithData callbackWithData;
+
+	private Object data;
 
 	public Task() {
 
@@ -53,9 +54,10 @@ public abstract class Task {
 
 	};
 
-	public final void addListener(TaskListener listener) {
+	public final void then(TaskCallbackWithData callbackWithData, Object data) {
 
-		listeners.put(listener, true);
+		this.callbackWithData = callbackWithData;
+		this.data = data;
 	}
 
 	public final void then(TaskCallback callback) {
@@ -69,14 +71,14 @@ public abstract class Task {
 
 		if (wasNotCompleted) {
 
-			for (TaskListener listener : listeners.keySet()) {
-
-				listener.onComplete(Task.this, true);
-			}
-
 			if (callback != null) {
 
 				callback.onComplete(this, true);
+			}
+
+			if (callbackWithData != null) {
+
+				callbackWithData.onComplete(this, true, data);
 			}
 
 			clean();
@@ -89,14 +91,14 @@ public abstract class Task {
 
 		if (wasNotCompleted) {
 
-			for (TaskListener listener : listeners.keySet()) {
-
-				listener.onComplete(Task.this, false);
-			}
-
 			if (callback != null) {
 
 				callback.onComplete(this, false);
+			}
+
+			if (callbackWithData != null) {
+
+				callbackWithData.onComplete(this, false, data);
 			}
 
 			clean();

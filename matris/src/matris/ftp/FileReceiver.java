@@ -14,7 +14,6 @@ import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
 import matris.messagesocket.MessageSocketListener;
 import matris.task.Task;
-import matris.task.TaskListener;
 import matris.tools.Util;
 
 public class FileReceiver {
@@ -127,29 +126,7 @@ public class FileReceiver {
 						FileMergeTask mergeTask = new FileMergeTask(filePart.getSrcAddress(), filePart.getFileId(),
 								filePart.getPartCount(), receiveDir);
 
-						mergeTask.addListener(new TaskListener() {
-							@Override
-							public void onComplete(Task task, boolean success) {
-
-								if (success) {
-
-									FileMergeTask mergeTask = (FileMergeTask) task;
-
-									int fileId = mergeTask.getMergedFile().getAbsolutePath().hashCode();
-
-									MsgFileReceived fileReceived = new MsgFileReceived();
-									fileReceived.setFileId(filePart.getFileId());
-									fileReceived.setRemoteFileId(fileId);
-
-									fileReceived.setDestination(filePart.getSrcAddress());
-									fileReceived.setReliable(true);
-
-									receivedFiles.put(fileId, mergeTask.getMergedFile());
-
-									socket.send(fileReceived);
-								}
-							}
-						});
+						mergeTask.then(this::onFileMergeTaskComplete, filePart);
 
 						mergeTask.start();
 					}
@@ -162,6 +139,29 @@ public class FileReceiver {
 
 				partFile.delete();
 			}
+		}
+	}
+
+	private void onFileMergeTaskComplete(Task task, boolean success, Object data) {
+
+		if (success) {
+
+			MsgFilePart filePart = (MsgFilePart) data;
+
+			FileMergeTask mergeTask = (FileMergeTask) task;
+
+			int fileId = mergeTask.getMergedFile().getAbsolutePath().hashCode();
+
+			MsgFileReceived fileReceived = new MsgFileReceived();
+			fileReceived.setFileId(filePart.getFileId());
+			fileReceived.setRemoteFileId(fileId);
+
+			fileReceived.setDestination(filePart.getSrcAddress());
+			fileReceived.setReliable(true);
+
+			receivedFiles.put(fileId, mergeTask.getMergedFile());
+
+			socket.send(fileReceived);
 		}
 	}
 }

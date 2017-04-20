@@ -9,7 +9,6 @@ import java.util.ArrayList;
 
 import matris.multiplier.common.MergeListTask;
 import matris.task.Task;
-import matris.task.TaskListener;
 import matris.tools.Util;
 
 public class SortAndMergeTask extends Task {
@@ -103,34 +102,32 @@ public class SortAndMergeTask extends Task {
 
 			MergeListTask mergeListTask = new MergeListTask(units, new ReduceRowComparator());
 
-			mergeListTask.addListener(new TaskListener() {
-
-				@Override
-				public void onComplete(Task task, boolean success) {
-
-					if (success) {
-
-						MergeListTask cTask = (MergeListTask) task;
-
-						sortedFile = new File(parentDir.getPath() + "/" + file.getName() + "_sorted");
-						cTask.getMergedFile().renameTo(sortedFile);
-
-						Util.remove(sortDir);
-
-						done();
-
-					} else {
-
-						fail();
-					}
-				}
-			});
+			mergeListTask.then(this::onMergeListTaskComplete);
 
 			mergeListTask.start();
 
 		} catch (IOException e) {
 
 			e.printStackTrace();
+			fail();
+		}
+	}
+
+	private void onMergeListTaskComplete(Task task, boolean success) {
+
+		if (success) {
+
+			MergeListTask cTask = (MergeListTask) task;
+
+			sortedFile = new File(parentDir.getPath() + "/" + file.getName() + "_sorted");
+			cTask.getMergedFile().renameTo(sortedFile);
+
+			Util.remove(sortDir);
+
+			done();
+
+		} else {
+
 			fail();
 		}
 	}

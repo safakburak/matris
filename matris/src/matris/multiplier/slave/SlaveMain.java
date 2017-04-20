@@ -15,7 +15,6 @@ import matris.messagesocket.Message;
 import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocketListener;
 import matris.task.Task;
-import matris.task.TaskListener;
 import matris.tools.Util;
 
 public class SlaveMain extends Worker implements MessageSocketListener {
@@ -104,24 +103,27 @@ public class SlaveMain extends Worker implements MessageSocketListener {
 				ReduceTask reduceTask = new ReduceTask(socket, partFiles.values(), info.getQ(), info.getTaskId(),
 						rootDir, info.getOwner(), info.getReductionNo());
 
-				reduceTask.addListener(new TaskListener() {
-
-					@Override
-					public void onComplete(Task task, boolean success) {
-
-						System.out.println(name + " completed reduction for task " + info.getTaskId() + " reduction "
-								+ info.getReductionNo());
-
-						ReduceTask cTask = (ReduceTask) task;
-
-						for (File f : cTask.getFiles()) {
-
-							fileReceiver.removeFile(f);
-						}
-					}
-				});
+				reduceTask.then(this::onReduceTaskComplete, info);
 
 				reduceTask.start();
+			}
+		}
+	}
+
+	private void onReduceTaskComplete(Task task, boolean success, Object data) {
+
+		if (success) {
+
+			MsgReduceInfo info = (MsgReduceInfo) data;
+
+			System.out.println(
+					name + " completed reduction for task " + info.getTaskId() + " reduction " + info.getReductionNo());
+
+			ReduceTask cTask = (ReduceTask) task;
+
+			for (File f : cTask.getFiles()) {
+
+				fileReceiver.removeFile(f);
 			}
 		}
 	}
@@ -141,24 +143,24 @@ public class SlaveMain extends Worker implements MessageSocketListener {
 			// avoid same message
 			if (prev == null) {
 
-				mapTask.addListener(new TaskListener() {
-
-					@Override
-					public void onComplete(Task task, boolean success) {
-
-						MapTask mapTask = (MapTask) task;
-
-						System.out.println(name + " completed mapping!");
-
-						fileReceiver.removeFile(mapTask.getHostsFile());
-						fileReceiver.removeFile(mapTask.getInputFile());
-					}
-				});
+				mapTask.then(this::onMapTaskComplete);
 
 				mapTask.start();
 			}
 		}
+	}
 
+	private void onMapTaskComplete(Task task, boolean success) {
+
+		if (success) {
+
+			MapTask mapTask = (MapTask) task;
+
+			System.out.println(name + " completed mapping!");
+
+			fileReceiver.removeFile(mapTask.getHostsFile());
+			fileReceiver.removeFile(mapTask.getInputFile());
+		}
 	}
 
 	public static void main(String[] args) throws NumberFormatException, IOException {
