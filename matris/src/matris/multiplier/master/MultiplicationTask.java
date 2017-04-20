@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import matris.ftp.FileReceiver;
 import matris.messages.MsgDone;
@@ -49,7 +48,7 @@ public class MultiplicationTask extends Task implements MessageSocketListener {
 
 	private ConcurrentHashMap<Integer, File> reducedParts = new ConcurrentHashMap<>();
 
-	private AtomicBoolean partitionCompleted = new AtomicBoolean(false);
+	private ConcurrentHashMap<MessageAddress, MessageAddress> workerReplacements = new ConcurrentHashMap<>();
 
 	public MultiplicationTask(int taskId, File inputFile, MessageSocket socket, List<MessageAddress> workers,
 			File outputDir, FileReceiver fileReceiver, File processDir) {
@@ -78,13 +77,28 @@ public class MultiplicationTask extends Task implements MessageSocketListener {
 
 				File inputPart = inputParts.get(i);
 
-				MessageAddress worker = workers.get(i);
+				MessageAddress aliveWorker;
 
-				InputPartSendTask distributeTask = new InputPartSendTask(socket, worker, inputPart, taskId, p, q, r, i);
+				// not for thread safety, but for consistency
+				synchronized (workerReplacements) {
 
-				inputPartSendTasks.put(inputPart, distributeTask);
+					aliveWorker = Util.getAliveWorker(workerReplacements, workers.get(i));
+				}
 
-				distributeTask.start();
+				if (aliveWorker == null) {
+
+					fail();
+					break;
+
+				} else {
+
+					InputPartSendTask distributeTask = new InputPartSendTask(socket, aliveWorker, inputPart, taskId, p,
+							q, r, i);
+
+					inputPartSendTasks.put(inputPart, distributeTask);
+
+					distributeTask.start();
+				}
 			}
 
 		} catch (NumberFormatException | IOException e) {
@@ -211,10 +225,19 @@ public class MultiplicationTask extends Task implements MessageSocketListener {
 
 	public void replaceWorker(MessageAddress deadWorker, MessageAddress newWorker) {
 
-		// wait for partitioning to complete
-		while (partitionCompleted.get() == false) {
+		MessageAddress aliveWorker;
 
-			Util.sleepSilent(10);
+		// not for thread safety, but for consistency
+		synchronized (workerReplacements) {
+
+			workerReplacements.put(deadWorker, newWorker);
+			aliveWorker = Util.getAliveWorker(workerReplacements, newWorker);
+		}
+
+		if (aliveWorker == null) {
+
+			fail();
+			return;
 		}
 
 		for (Entry<File, InputPartSendTask> e : inputPartSendTasks.entrySet()) {
@@ -223,8 +246,8 @@ public class MultiplicationTask extends Task implements MessageSocketListener {
 
 				InputPartSendTask oldTask = e.getValue();
 
-				InputPartSendTask newTask = new InputPartSendTask(socket, newWorker, oldTask.getInputPart(), taskId, p,
-						q, r, oldTask.getPartNo());
+				InputPartSendTask newTask = new InputPartSendTask(socket, aliveWorker, oldTask.getInputPart(), taskId,
+						p, q, r, oldTask.getPartNo());
 
 				inputPartSendTasks.put(oldTask.getInputPart(), newTask);
 

@@ -94,6 +94,9 @@ public class SendMappedFileTask extends Task {
 	@Override
 	protected void clean() {
 
-		sendTask.cancel();
+		if (sendTask != null) {
+
+			sendTask.cancel();
+		}
 	}
 }

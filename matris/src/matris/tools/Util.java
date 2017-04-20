@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import matris.messagesocket.MessageAddress;
 
@@ -132,5 +133,27 @@ public class Util {
 		tmp.renameTo(file1);
 
 		return file1;
+	}
+
+	public static MessageAddress getAliveWorker(ConcurrentHashMap<MessageAddress, MessageAddress> workerReplacements,
+			MessageAddress worker) {
+
+		if (workerReplacements.containsKey(worker)) {
+
+			MessageAddress candidate = getAliveWorker(workerReplacements, workerReplacements.get(worker));
+
+			if (candidate == worker) {
+
+				return null;
+
+			} else {
+
+				return candidate;
+			}
+
+		} else {
+
+			return worker;
+		}
 	}
 }

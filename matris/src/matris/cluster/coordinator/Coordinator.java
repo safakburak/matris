@@ -16,9 +16,9 @@ import matris.tools.Util;
 
 public class Coordinator {
 
-	private static final int PING_PERIOD = 1000;
+	private static final int PING_PERIOD = 100;
 
-	private static final int THRESHOLD = 10000;
+	private static final int THRESHOLD = 1000;
 
 	private boolean stop = false;
 

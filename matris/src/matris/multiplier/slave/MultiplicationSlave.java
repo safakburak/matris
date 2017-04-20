@@ -12,6 +12,7 @@ import matris.messages.MsgMapInfo;
 import matris.messages.MsgReduceInfo;
 import matris.messages.MsgWorkerReplacement;
 import matris.messagesocket.Message;
+import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocketListener;
 import matris.task.Task;
 import matris.tools.Util;
@@ -30,6 +31,8 @@ public class MultiplicationSlave extends Worker implements MessageSocketListener
 
 	// taskID -> reductionNo -> partNo -> File
 	private ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, File>>> taskReduceMapFiles = new ConcurrentHashMap<>();
+
+	private ConcurrentHashMap<MessageAddress, MessageAddress> workerReplacements = new ConcurrentHashMap<>();
 
 	public MultiplicationSlave(String name, File parentDir, int port) throws SocketException {
 
@@ -92,11 +95,17 @@ public class MultiplicationSlave extends Worker implements MessageSocketListener
 
 		socket.cancelAddress(workerReplacement.getDeadWorker());
 
-		for (Entry<File, MapTask> e : mapTasks.entrySet()) {
+		// not for thread safety, but for consistency
+		synchronized (workerReplacements) {
 
-			MapTask mapTask = e.getValue();
+			workerReplacements.put(workerReplacement.getDeadWorker(), workerReplacement.getNewWorker());
 
-			mapTask.replaceWorker(workerReplacement.getDeadWorker(), workerReplacement.getNewWorker());
+			for (Entry<File, MapTask> e : mapTasks.entrySet()) {
+
+				MapTask mapTask = e.getValue();
+
+				mapTask.replaceWorker(workerReplacement.getDeadWorker(), workerReplacement.getNewWorker());
+			}
 		}
 	}
 
@@ -152,17 +161,26 @@ public class MultiplicationSlave extends Worker implements MessageSocketListener
 
 		if (inputFile != null && hostsFile != null) {
 
-			MapTask mapTask = new MapTask(socket, info.getSource(), info.getTaskId(), inputFile, hostsFile, info.getP(),
-					info.getQ(), info.getR(), rootDir, info.getPartNo());
+			// not for thread safety, but for consistency
+			synchronized (workerReplacements) {
 
-			MapTask prev = mapTasks.putIfAbsent(inputFile, mapTask);
+				MapTask mapTask = new MapTask(socket, info.getSource(), info.getTaskId(), inputFile, hostsFile,
+						info.getP(), info.getQ(), info.getR(), rootDir, info.getPartNo());
 
-			// avoid same message
-			if (prev == null) {
+				for (Entry<MessageAddress, MessageAddress> e : workerReplacements.entrySet()) {
 
-				mapTask.then(this::onMapTaskComplete);
+					mapTask.replaceWorker(e.getKey(), e.getValue());
+				}
 
-				mapTask.start();
+				MapTask prev = mapTasks.putIfAbsent(inputFile, mapTask);
+
+				// avoid same message
+				if (prev == null) {
+
+					mapTask.then(this::onMapTaskComplete);
+
+					mapTask.start();
+				}
 			}
 		}
 	}

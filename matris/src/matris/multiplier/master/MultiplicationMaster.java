@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -25,6 +26,8 @@ public class MultiplicationMaster extends Coordinator {
 	private FileReceiver fileReceiver;
 
 	private ConcurrentHashMap<Integer, MultiplicationTask> multiplicationTasks = new ConcurrentHashMap<>();
+
+	private Random random = new Random();
 
 	public MultiplicationMaster(int port, File inputDir) throws IOException {
 
@@ -132,9 +135,11 @@ public class MultiplicationMaster extends Coordinator {
 
 		List<MessageAddress> workers = getWorkers();
 
-		for (int i = workers.indexOf(deadWorker) + 1; i < workers.size(); i++) {
+		int offset = random.nextInt(workers.size());
 
-			MessageAddress candidate = workers.get(i % workers.size());
+		for (int i = 0; i < workers.size(); i++) {
+
+			MessageAddress candidate = workers.get((i + offset) % workers.size());
 
 			if (candidate == deadWorker) {
 
@@ -168,6 +173,7 @@ public class MultiplicationMaster extends Coordinator {
 
 			MsgWorkerReplacement msgWorkerDown = new MsgWorkerReplacement();
 			msgWorkerDown.setDeadWorker(deadWorker);
+			msgWorkerDown.setNewWorker(replacement);
 			msgWorkerDown.setUrgent(true);
 			msgWorkerDown.setReliable(true);
 			msgWorkerDown.setDestination(worker);

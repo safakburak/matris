@@ -8,7 +8,6 @@ import java.net.SocketException;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.ConcurrentSkipListSet;
 
 import matris.messages.MsgAck;
 import matris.tools.Util;
@@ -77,7 +76,7 @@ public class MessageSocket {
 
 	private ConcurrentHashMap<Integer, Message> ackWaitingMessages = new ConcurrentHashMap<>();
 
-	private ConcurrentSkipListSet<MessageAddress> cancelledAddresses = new ConcurrentSkipListSet<>();
+	private ConcurrentHashMap<MessageAddress, Boolean> cancelledAddresses = new ConcurrentHashMap<>();
 
 	private int port;
 
@@ -131,7 +130,7 @@ public class MessageSocket {
 			return;
 		}
 
-		if (cancelledAddresses.contains(message.getSource())) {
+		if (cancelledAddresses.containsKey(message.getSource())) {
 
 			return;
 		}
@@ -268,7 +267,7 @@ public class MessageSocket {
 
 				MessageAddress to = new MessageAddress(entry.getValue().getDestHost(), entry.getValue().getDestPort());
 
-				if (cancelledAddresses.contains(to)) {
+				if (cancelledAddresses.containsKey(to)) {
 
 					ackWaitingMessages.remove(entry.getKey());
 
@@ -297,7 +296,7 @@ public class MessageSocket {
 
 			MessageAddress to = new MessageAddress(message.getDestHost(), message.getDestPort());
 
-			if (cancelledAddresses.contains(to) == false) {
+			if (cancelledAddresses.containsKey(to) == false) {
 
 				try {
 
@@ -333,7 +332,7 @@ public class MessageSocket {
 
 	public void cancelAddress(MessageAddress address) {
 
-		cancelledAddresses.add(address);
+		cancelledAddresses.put(address, true);
 	}
 
 	public void stop() {

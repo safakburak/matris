@@ -18,7 +18,7 @@ public class SlaveMain {
 
 		dir.mkdir();
 
-		List<MessageAddress> slaves = Util.parseHostsFile(new File("hosts.txt"));
+		List<MessageAddress> slaves = Util.parseHostsFile(new File("hostsForSlaveMain.txt"));
 
 		for (int i = 0; i < slaves.size(); i++) {
 

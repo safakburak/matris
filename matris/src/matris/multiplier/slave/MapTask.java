@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocket;
@@ -42,11 +41,11 @@ public class MapTask extends Task {
 
 	private List<MessageAddress> workers;
 
+	private ConcurrentHashMap<MessageAddress, MessageAddress> workerReplacements = new ConcurrentHashMap<>();
+
 	private File[] mappedFiles;
 
 	private int partNo;
-
-	private AtomicBoolean mappingCompleted = new AtomicBoolean(false);
 
 	private ConcurrentHashMap<File, SendMappedFileTask> sendTasks = new ConcurrentHashMap<>();
 
@@ -97,25 +96,39 @@ public class MapTask extends Task {
 
 			map();
 
-			mappingCompleted.set(true);
-
 			for (int i = 0; i < mappedFiles.length; i++) {
 
-				SendMappedFileTask task = new SendMappedFileTask(socket, workers.get(i), mappedFiles[i], taskId, owner,
-						q, partNo, workers.size(), i);
+				MessageAddress aliveWorker;
 
-				sendTasks.put(mappedFiles[i], task);
+				// not for thread safety, but for consistency
+				synchronized (workerReplacements) {
 
-				task.then(new TaskCallback() {
+					aliveWorker = Util.getAliveWorker(workerReplacements, workers.get(i));
+				}
 
-					@Override
-					public void onComplete(Task task, boolean success) {
+				if (aliveWorker == null) {
 
-						checkForCompletion();
-					}
-				});
+					fail();
+					break;
 
-				task.start();
+				} else {
+
+					SendMappedFileTask task = new SendMappedFileTask(socket, aliveWorker, mappedFiles[i], taskId, owner,
+							q, partNo, workers.size(), i);
+
+					sendTasks.put(mappedFiles[i], task);
+
+					task.then(new TaskCallback() {
+
+						@Override
+						public void onComplete(Task task, boolean success) {
+
+							checkForCompletion();
+						}
+					});
+
+					task.start();
+				}
 			}
 
 		} catch (IOException e) {
@@ -212,26 +225,38 @@ public class MapTask extends Task {
 
 	public void replaceWorker(MessageAddress deadWorker, MessageAddress newWorker) {
 
-		// wait for mapping to complete
-		while (mappingCompleted.get() == false) {
+		MessageAddress aliveWorker;
 
-			Util.sleepSilent(10);
+		// not for thread safety, but for consistency
+		synchronized (workerReplacements) {
+
+			workerReplacements.put(deadWorker, newWorker);
+			aliveWorker = Util.getAliveWorker(workerReplacements, newWorker);
 		}
 
-		for (Entry<File, SendMappedFileTask> e : sendTasks.entrySet()) {
+		if (aliveWorker == null) {
 
-			if (e.getValue().getTo().equals(deadWorker)) {
+			fail();
+			return;
+		}
 
-				SendMappedFileTask oldTask = e.getValue();
+		if (sendTasks != null) {
 
-				SendMappedFileTask newTask = new SendMappedFileTask(socket, newWorker, e.getKey(), taskId, owner, q,
-						partNo, workers.size(), oldTask.getReductionNo());
+			for (Entry<File, SendMappedFileTask> e : sendTasks.entrySet()) {
 
-				sendTasks.put(e.getKey(), newTask);
+				if (e.getValue().getTo().equals(deadWorker)) {
 
-				oldTask.cancel();
+					SendMappedFileTask oldTask = e.getValue();
 
-				newTask.start();
+					SendMappedFileTask newTask = new SendMappedFileTask(socket, aliveWorker, e.getKey(), taskId, owner,
+							q, partNo, workers.size(), oldTask.getReductionNo());
+
+					sendTasks.put(e.getKey(), newTask);
+
+					oldTask.cancel();
+
+					newTask.start();
+				}
 			}
 		}
 	}
