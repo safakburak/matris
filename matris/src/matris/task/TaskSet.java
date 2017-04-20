@@ -9,12 +9,7 @@ public class TaskSet extends Task implements TaskListener {
 
 	public TaskSet() {
 
-		this(true);
-	}
-
-	public TaskSet(boolean newThread) {
-
-		super(newThread);
+		super(false);
 	}
 
 	public void addTask(Task task) {

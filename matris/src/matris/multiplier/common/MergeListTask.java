@@ -46,7 +46,7 @@ public class MergeListTask extends Task {
 
 			List<File> result = new ArrayList<>();
 
-			TaskSet taskSet = new TaskSet(false);
+			TaskSet taskSet = new TaskSet();
 
 			for (int i = 0; i < parts.size(); i += 2) {
 

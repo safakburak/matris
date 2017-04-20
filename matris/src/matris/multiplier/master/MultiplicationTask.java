@@ -19,7 +19,6 @@ import matris.messagesocket.MessageSocket;
 import matris.messagesocket.MessageSocketListener;
 import matris.multiplier.common.MergeListTask;
 import matris.task.Task;
-import matris.task.TaskListener;
 import matris.tools.Util;
 
 public class MultiplicationTask extends Task implements MessageSocketListener {
@@ -78,15 +77,6 @@ public class MultiplicationTask extends Task implements MessageSocketListener {
 				MessageAddress worker = workers.get(i % workers.size());
 
 				InputPartSendTask distributeTask = new InputPartSendTask(socket, worker, inputPart, taskId, p, q, r, i);
-
-				distributeTask.addListener(new TaskListener() {
-
-					@Override
-					public void onComplete(Task task, boolean success) {
-
-						// TODO ??
-					}
-				});
 
 				distributeTasks.put(inputPart, distributeTask);
 
@@ -171,43 +161,41 @@ public class MultiplicationTask extends Task implements MessageSocketListener {
 
 					MergeListTask mergeListTask = new MergeListTask(partList, new ResultRowComparator());
 
-					mergeListTask.addListener(new TaskListener() {
-
-						@Override
-						public void onComplete(Task task, boolean success) {
-
-							if (success) {
-
-								MergeListTask cTask = (MergeListTask) task;
-
-								File result = new File(outputDir.getPath() + "/" + inputFile.getName() + "_output");
-
-								cTask.getMergedFile().renameTo(result);
-
-								Util.remove(rootDir);
-
-								for (MessageAddress worker : workers) {
-
-									MsgDone msgDone = new MsgDone();
-									msgDone.setTaskId(taskId);
-									msgDone.setDestination(worker);
-									msgDone.setReliable(true);
-
-									socket.send(msgDone);
-								}
-
-								done();
-
-							} else {
-
-								fail();
-							}
-						}
-					});
+					mergeListTask.then(this::onMergeListTaskComplete);
 
 					mergeListTask.start();
 				}
 			}
+		}
+	}
+
+	private void onMergeListTaskComplete(Task task, boolean success) {
+
+		if (success) {
+
+			MergeListTask cTask = (MergeListTask) task;
+
+			File result = new File(outputDir.getPath() + "/" + inputFile.getName() + "_output");
+
+			cTask.getMergedFile().renameTo(result);
+
+			Util.remove(rootDir);
+
+			for (MessageAddress worker : workers) {
+
+				MsgDone msgDone = new MsgDone();
+				msgDone.setTaskId(taskId);
+				msgDone.setDestination(worker);
+				msgDone.setReliable(true);
+
+				socket.send(msgDone);
+			}
+
+			done();
+
+		} else {
+
+			fail();
 		}
 	}
 

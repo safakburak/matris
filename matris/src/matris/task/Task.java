@@ -13,6 +13,8 @@ public abstract class Task {
 
 	private boolean newThread;
 
+	private TaskCallback callback;
+
 	public Task() {
 
 		this(true);
@@ -56,6 +58,11 @@ public abstract class Task {
 		listeners.put(listener, true);
 	}
 
+	public final void then(TaskCallback callback) {
+
+		this.callback = callback;
+	}
+
 	protected void done() {
 
 		boolean wasNotCompleted = completed.compareAndSet(false, true);
@@ -65,6 +72,11 @@ public abstract class Task {
 			for (TaskListener listener : listeners.keySet()) {
 
 				listener.onComplete(Task.this, true);
+			}
+
+			if (callback != null) {
+
+				callback.onComplete(this, true);
 			}
 
 			clean();
@@ -80,6 +92,11 @@ public abstract class Task {
 			for (TaskListener listener : listeners.keySet()) {
 
 				listener.onComplete(Task.this, false);
+			}
+
+			if (callback != null) {
+
+				callback.onComplete(this, false);
 			}
 
 			clean();
