@@ -68,7 +68,7 @@ public class Coordinator {
 			workerPingTimes.put(worker, System.currentTimeMillis());
 		}
 
-		System.out.println("Starting with " + workerStates.size() + " workers.");
+		System.out.println("Coordinator at port " + port + " is starting with " + workerStates.size() + " workers.");
 
 		watchingThread.start();
 	}

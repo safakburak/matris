@@ -1,6 +1,8 @@
 package matris.multiplier.master;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -23,11 +25,11 @@ public class MasterMain extends Coordinator {
 
 	private ConcurrentHashMap<Integer, MultiplicationTask> tasks = new ConcurrentHashMap<>();
 
-	public MasterMain(int port) throws IOException {
+	public MasterMain(int port, File inputDir) throws IOException {
 
 		super(port);
 
-		inputDir = new File("input");
+		this.inputDir = inputDir;
 		processDir = new File("process_" + port);
 		outputDir = new File("output_" + port);
 		receiveDir = new File("receive_" + port);
@@ -122,7 +124,20 @@ public class MasterMain extends Coordinator {
 
 	public static void main(String[] args) throws IOException {
 
-		new MasterMain(1234);
-		new MasterMain(4321);
+		BufferedReader reader = new BufferedReader(new FileReader("masters.txt"));
+
+		String line;
+
+		while ((line = reader.readLine()) != null) {
+
+			if (line.startsWith("--") == false) {
+
+				String[] tokens = line.split(" ");
+
+				new MasterMain(Integer.parseInt(tokens[0]), new File(tokens[1]));
+			}
+		}
+
+		reader.close();
 	}
 }
