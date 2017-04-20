@@ -162,28 +162,26 @@ public class MessageSocket {
 
 				// id holds hash value of the message
 				ackWaitingMessages.remove(msgAck.getMessageIdToAck());
+			}
+
+			if (message.isReliable()) {
+
+				MsgAck msgAck = new MsgAck();
+				msgAck.setDestHost(message.getSrcHost());
+				msgAck.setDestPort(message.getSrcPort());
+				msgAck.setMessageIdToAck(message.getMessageId());
+				msgAck.setUrgent(true);
+
+				send(msgAck);
+			}
+
+			if (message.isUrgent()) {
+
+				inbox.addFirst(message);
 
 			} else {
 
-				if (message.isReliable()) {
-
-					MsgAck msgAck = new MsgAck();
-					msgAck.setDestHost(message.getSrcHost());
-					msgAck.setDestPort(message.getSrcPort());
-					msgAck.setMessageIdToAck(message.getMessageId());
-					msgAck.setUrgent(true);
-
-					send(msgAck);
-				}
-
-				if (message.isUrgent()) {
-
-					inbox.addFirst(message);
-
-				} else {
-
-					inbox.add(message);
-				}
+				inbox.add(message);
 			}
 
 		} catch (IOException e) {

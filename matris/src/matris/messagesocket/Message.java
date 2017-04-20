@@ -27,11 +27,11 @@ public abstract class Message implements Serializable {
 
 	private int messageCode;
 
-	private byte reliable;
+	private byte reliable = 0;
+
+	private byte urgent = 0;
 
 	private long lastSendTime;
-
-	private byte urgent;
 
 	public Message(int opCode) {
 

@@ -16,7 +16,7 @@ import matris.tools.Util;
 
 public class Coordinator {
 
-	private static final int WAIT = 3000;
+	private static final int WAIT = 10000;
 
 	private boolean stop = false;
 
@@ -51,12 +51,7 @@ public class Coordinator {
 			@Override
 			public void onMessage(Message message) {
 
-				if (message instanceof MsgPing) {
-
-					MsgPing ping = (MsgPing) message;
-
-					workerPingTimes.put(ping.getSrcAddress(), System.currentTimeMillis());
-				}
+				workerPingTimes.put(message.getSrcAddress(), System.currentTimeMillis());
 			}
 		});
 
