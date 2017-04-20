@@ -84,6 +84,11 @@ public class MapTask extends Task {
 		return mapDir;
 	}
 
+	public MessageAddress getOwner() {
+
+		return owner;
+	}
+
 	@Override
 	protected void doTask() {
 

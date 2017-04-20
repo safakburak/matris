@@ -32,7 +32,7 @@ public class MultiplicationSlave extends Worker implements MessageSocketListener
 	// taskID -> reductionNo -> partNo -> File
 	private ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, File>>> taskReduceMapFiles = new ConcurrentHashMap<>();
 
-	private ConcurrentHashMap<MessageAddress, MessageAddress> workerReplacements = new ConcurrentHashMap<>();
+	private ConcurrentHashMap<MessageAddress, ConcurrentHashMap<MessageAddress, MessageAddress>> workerReplacements = new ConcurrentHashMap<>();
 
 	public MultiplicationSlave(String name, File parentDir, int port) throws SocketException {
 
@@ -95,16 +95,22 @@ public class MultiplicationSlave extends Worker implements MessageSocketListener
 
 		socket.cancelAddress(workerReplacement.getDeadWorker());
 
-		// not for thread safety, but for consistency
-		synchronized (workerReplacements) {
+		workerReplacements.putIfAbsent(workerReplacement.getSource(), new ConcurrentHashMap<>());
 
-			workerReplacements.put(workerReplacement.getDeadWorker(), workerReplacement.getNewWorker());
+		// not for thread safety, but for consistency
+		synchronized (workerReplacements.get(workerReplacement.getSource())) {
+
+			workerReplacements.get(workerReplacement.getSource()).put(workerReplacement.getDeadWorker(),
+					workerReplacement.getNewWorker());
 
 			for (Entry<File, MapTask> e : mapTasks.entrySet()) {
 
 				MapTask mapTask = e.getValue();
 
-				mapTask.replaceWorker(workerReplacement.getDeadWorker(), workerReplacement.getNewWorker());
+				if (mapTask.getOwner().equals(workerReplacement.getSource())) {
+
+					mapTask.replaceWorker(workerReplacement.getDeadWorker(), workerReplacement.getNewWorker());
+				}
 			}
 		}
 	}
@@ -159,15 +165,17 @@ public class MultiplicationSlave extends Worker implements MessageSocketListener
 		File inputFile = fileReceiver.getFile(info.getRemoteInputPartId());
 		File hostsFile = fileReceiver.getFile(info.getRemoteHostsFileId());
 
+		workerReplacements.putIfAbsent(info.getSource(), new ConcurrentHashMap<>());
+
 		if (inputFile != null && hostsFile != null) {
 
 			// not for thread safety, but for consistency
-			synchronized (workerReplacements) {
+			synchronized (workerReplacements.get(info.getSource())) {
 
 				MapTask mapTask = new MapTask(socket, info.getSource(), info.getTaskId(), inputFile, hostsFile,
 						info.getP(), info.getQ(), info.getR(), rootDir, info.getPartNo());
 
-				for (Entry<MessageAddress, MessageAddress> e : workerReplacements.entrySet()) {
+				for (Entry<MessageAddress, MessageAddress> e : workerReplacements.get(info.getSource()).entrySet()) {
 
 					mapTask.replaceWorker(e.getKey(), e.getValue());
 				}

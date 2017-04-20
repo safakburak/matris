@@ -164,6 +164,8 @@ public class MultiplicationMaster extends Coordinator {
 
 		}
 
+		System.out.println(deadWorker + " -> " + replacement);
+
 		for (MultiplicationTask task : multiplicationTasks.values()) {
 
 			task.replaceWorker(deadWorker, replacement);
@@ -171,14 +173,14 @@ public class MultiplicationMaster extends Coordinator {
 
 		for (MessageAddress worker : getAliveWorkers()) {
 
-			MsgWorkerReplacement msgWorkerDown = new MsgWorkerReplacement();
-			msgWorkerDown.setDeadWorker(deadWorker);
-			msgWorkerDown.setNewWorker(replacement);
-			msgWorkerDown.setUrgent(true);
-			msgWorkerDown.setReliable(true);
-			msgWorkerDown.setDestination(worker);
+			MsgWorkerReplacement msgWorkerReplacement = new MsgWorkerReplacement();
+			msgWorkerReplacement.setDeadWorker(deadWorker);
+			msgWorkerReplacement.setNewWorker(replacement);
+			msgWorkerReplacement.setUrgent(true);
+			msgWorkerReplacement.setReliable(true);
+			msgWorkerReplacement.setDestination(worker);
 
-			socket.send(msgWorkerDown);
+			socket.send(msgWorkerReplacement);
 		}
 	}
 

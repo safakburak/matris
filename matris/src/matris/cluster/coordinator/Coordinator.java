@@ -94,10 +94,9 @@ public class Coordinator {
 				MessageAddress key = entry.getKey();
 				Long lastPingTime = entry.getValue();
 
-				boolean oldState = workerStates.get(key);
 				boolean newState = lastPingTime >= limit;
 
-				workerStates.put(key, newState);
+				boolean oldState = workerStates.put(key, newState);
 
 				if (oldState == false && newState == true) {
 
