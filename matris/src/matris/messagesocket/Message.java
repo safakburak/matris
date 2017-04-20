@@ -31,6 +31,8 @@ public abstract class Message implements Serializable {
 
 	private long lastSendTime;
 
+	private byte urgent;
+
 	public Message(int opCode) {
 
 		this.messageCode = opCode;
@@ -116,6 +118,16 @@ public abstract class Message implements Serializable {
 		this.reliable = (byte) (reliable ? 1 : 0);
 	}
 
+	public boolean isUrgent() {
+
+		return urgent == 1;
+	}
+
+	public void setUrgent(boolean urgent) {
+
+		this.urgent = (byte) (urgent ? 1 : 0);
+	}
+
 	public long getLastSendTime() {
 
 		return lastSendTime;
@@ -138,6 +150,7 @@ public abstract class Message implements Serializable {
 		buffer.putInt(message.messageCode);
 		buffer.putInt(message.srcPort);
 		buffer.put(message.reliable);
+		buffer.put(message.urgent);
 		buffer.putInt(message.messageId);
 
 		message.serialize(buffer);
@@ -159,6 +172,7 @@ public abstract class Message implements Serializable {
 
 			result.srcPort = buffer.getInt();
 			result.reliable = buffer.get();
+			result.urgent = buffer.get();
 			result.messageId = buffer.getInt();
 
 			result.deserialize(buffer);

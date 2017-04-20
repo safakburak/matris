@@ -7,7 +7,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import matris.messages.MsgAck;
@@ -69,11 +69,9 @@ public class MessageSocket {
 
 	private DatagramSocket socket;
 
-	private ConcurrentLinkedQueue<Message> inbox = new ConcurrentLinkedQueue<>();
+	private ConcurrentLinkedDeque<Message> inbox = new ConcurrentLinkedDeque<>();
 
-	private ConcurrentLinkedQueue<Message> urgentOutbox = new ConcurrentLinkedQueue<>();
-
-	private ConcurrentLinkedQueue<Message> outbox = new ConcurrentLinkedQueue<>();
+	private ConcurrentLinkedDeque<Message> outbox = new ConcurrentLinkedDeque<>();
 
 	private ConcurrentHashMap<MessageSocketListener, Boolean> listeners = new ConcurrentHashMap<>();
 
@@ -128,19 +126,14 @@ public class MessageSocket {
 
 	public void send(Message message) {
 
-		send(message, false);
-	}
-
-	public void send(Message message, boolean urgent) {
-
 		if (stop) {
 
 			return;
 		}
 
-		if (urgent) {
+		if (message.isUrgent()) {
 
-			urgentOutbox.add(message);
+			outbox.addFirst(message);
 
 		} else {
 
@@ -149,7 +142,7 @@ public class MessageSocket {
 				Util.sleepSilent(10);
 			}
 
-			outbox.add(message);
+			outbox.addLast(message);
 		}
 	}
 
@@ -178,11 +171,19 @@ public class MessageSocket {
 					msgAck.setDestHost(message.getSrcHost());
 					msgAck.setDestPort(message.getSrcPort());
 					msgAck.setMessageIdToAck(message.getMessageId());
+					msgAck.setUrgent(true);
 
-					urgentOutbox.add(msgAck);
+					send(msgAck);
 				}
 
-				inbox.add(message);
+				if (message.isUrgent()) {
+
+					inbox.addFirst(message);
+
+				} else {
+
+					inbox.add(message);
+				}
 			}
 
 		} catch (IOException e) {
@@ -250,30 +251,6 @@ public class MessageSocket {
 	private void write() {
 
 		boolean didSomething = false;
-
-		while (urgentOutbox.isEmpty() == false) {
-
-			Message message = urgentOutbox.poll();
-
-			if (message != null) {
-
-				MessageAddress to = new MessageAddress(message.getDestHost(), message.getDestPort());
-
-				if (cancelledAddresses.contains(to) == false) {
-
-					try {
-
-						socket.send(pack(message));
-
-					} catch (IOException e) {
-
-						// nothing to do
-					}
-				}
-
-				didSomething = true;
-			}
-		}
 
 		// resend ack waiting messages if enough time passed
 

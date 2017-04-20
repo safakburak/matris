@@ -26,8 +26,9 @@ public class Worker {
 
 					MsgPing msgPing = (MsgPing) message;
 					msgPing.setDestination(message.getSrcAddress());
+					msgPing.setUrgent(true);
 
-					socket.send(msgPing, true);
+					socket.send(msgPing);
 				}
 			}
 		});

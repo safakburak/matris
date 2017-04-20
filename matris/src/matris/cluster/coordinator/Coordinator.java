@@ -16,7 +16,7 @@ import matris.tools.Util;
 
 public class Coordinator {
 
-	private static final int WAIT = 10000;
+	private static final int WAIT = 3000;
 
 	private boolean stop = false;
 
@@ -80,8 +80,9 @@ public class Coordinator {
 
 			MsgPing msgPing = new MsgPing();
 			msgPing.setDestination(worker);
+			msgPing.setUrgent(true);
 
-			socket.send(msgPing, true);
+			socket.send(msgPing);
 		}
 
 		Util.sleepSilent(WAIT);
