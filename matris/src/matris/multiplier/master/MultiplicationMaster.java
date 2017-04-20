@@ -1,8 +1,6 @@
 package matris.multiplier.master;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -14,7 +12,7 @@ import matris.ftp.FileReceiver;
 import matris.task.Task;
 import matris.tools.Util;
 
-public class MasterMain extends Coordinator {
+public class MultiplicationMaster extends Coordinator {
 
 	private File inputDir;
 	private File processDir;
@@ -25,7 +23,7 @@ public class MasterMain extends Coordinator {
 
 	private ConcurrentHashMap<Integer, MultiplicationTask> tasks = new ConcurrentHashMap<>();
 
-	public MasterMain(int port, File inputDir) throws IOException {
+	public MultiplicationMaster(int port, File inputDir) throws IOException {
 
 		super(port);
 
@@ -120,24 +118,5 @@ public class MasterMain extends Coordinator {
 
 			stop();
 		}
-	}
-
-	public static void main(String[] args) throws IOException {
-
-		BufferedReader reader = new BufferedReader(new FileReader("masters.txt"));
-
-		String line;
-
-		while ((line = reader.readLine()) != null) {
-
-			if (line.startsWith("--") == false) {
-
-				String[] tokens = line.split(" ");
-
-				new MasterMain(Integer.parseInt(tokens[0]), new File(tokens[1]));
-			}
-		}
-
-		reader.close();
 	}
 }

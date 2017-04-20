@@ -1,7 +1,6 @@
 package matris.multiplier.slave;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.SocketException;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,12 +11,11 @@ import matris.messages.MsgDone;
 import matris.messages.MsgMapInfo;
 import matris.messages.MsgReduceInfo;
 import matris.messagesocket.Message;
-import matris.messagesocket.MessageAddress;
 import matris.messagesocket.MessageSocketListener;
 import matris.task.Task;
 import matris.tools.Util;
 
-public class SlaveMain extends Worker implements MessageSocketListener {
+public class MultiplicationSlave extends Worker implements MessageSocketListener {
 
 	private String name;
 
@@ -32,7 +30,7 @@ public class SlaveMain extends Worker implements MessageSocketListener {
 	// taskID -> reductionNo -> partNo -> File
 	private ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, File>>> taskReduceMapFiles = new ConcurrentHashMap<>();
 
-	public SlaveMain(String name, File parentDir, int port) throws SocketException {
+	public MultiplicationSlave(String name, File parentDir, int port) throws SocketException {
 
 		super(port);
 
@@ -160,22 +158,6 @@ public class SlaveMain extends Worker implements MessageSocketListener {
 
 			fileReceiver.removeFile(mapTask.getHostsFile());
 			fileReceiver.removeFile(mapTask.getInputFile());
-		}
-	}
-
-	public static void main(String[] args) throws NumberFormatException, IOException {
-
-		File dir = new File("slaves");
-
-		Util.remove(dir);
-
-		dir.mkdir();
-
-		MessageAddress[] slaves = Util.parseHostsFile(new File("hosts.txt"));
-
-		for (int i = 0; i < slaves.length; i++) {
-
-			new SlaveMain("slave_" + i, dir, slaves[i].getPort());
 		}
 	}
 }
