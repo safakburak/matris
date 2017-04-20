@@ -34,9 +34,9 @@ public class InputGenerator {
 
 		FileWriter writer = new FileWriter(output);
 
-		int p = 20;
+		int p = 100;
 		int q = 20;
-		int r = 20;
+		int r = 100;
 
 		writer.write(p + "\n");
 		writer.write(q + "\n");

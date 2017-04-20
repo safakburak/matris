@@ -137,6 +137,8 @@ public class MessageSocket {
 
 		} else {
 
+			// outbox is overloaded
+			// wait the sender thread to avoid overloading the cluster
 			while (outbox.size() >= MAX_OUTBOX) {
 
 				Util.sleepSilent(10);

@@ -16,7 +16,9 @@ import matris.tools.Util;
 
 public class Coordinator {
 
-	private static final int WAIT = 10000;
+	private static final int PING_PERIOD = 1000;
+
+	private static final int THRESHOLD = 10000;
 
 	private boolean stop = false;
 
@@ -80,10 +82,10 @@ public class Coordinator {
 			socket.send(msgPing);
 		}
 
-		Util.sleepSilent(WAIT);
+		Util.sleepSilent(PING_PERIOD);
 
 		// check
-		long limit = System.currentTimeMillis() - WAIT;
+		long limit = System.currentTimeMillis() - THRESHOLD;
 
 		for (Entry<MessageAddress, Long> entry : workerPingTimes.entrySet()) {
 
