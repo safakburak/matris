@@ -279,6 +279,7 @@ public class MessageSocket {
 
 					} catch (IOException e) {
 
+						e.printStackTrace();
 						// nothing to do
 					}
 
@@ -304,6 +305,7 @@ public class MessageSocket {
 
 				} catch (IOException e) {
 
+					e.printStackTrace();
 					// nothing to do
 				}
 

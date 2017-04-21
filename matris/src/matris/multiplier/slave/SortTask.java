@@ -93,9 +93,17 @@ public class SortTask extends Task {
 
 				lines.sort(new ReduceRowComparator());
 
-				File out = new File(sortDir.getPath() + "/u_" + unitIndex);
+				File out = new File(sortDir.getPath() + "/unit_" + unitIndex);
 
 				writeToFile(lines, out);
+
+				units.add(out);
+			}
+
+			if (file.length() == 0) {
+
+				File out = new File(sortDir.getPath() + "/unit_" + unitIndex);
+				out.createNewFile();
 
 				units.add(out);
 			}

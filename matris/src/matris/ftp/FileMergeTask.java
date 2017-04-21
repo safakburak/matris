@@ -61,18 +61,21 @@ public class FileMergeTask extends Task {
 
 				byte[] chunk = new byte[(int) partFile.length()];
 
-				while (true) {
+				if (partFile.length() > 0) {
 
-					int readBytes = partInputStream.read(chunk);
+					while (true) {
 
-					if (readBytes == -1) {
+						int readBytes = partInputStream.read(chunk);
 
-						break;
+						if (readBytes == -1) {
+
+							break;
+						}
+
+						outputStream.write(chunk, 0, readBytes);
+
+						outputStream.flush();
 					}
-
-					outputStream.write(chunk, 0, readBytes);
-
-					outputStream.flush();
 				}
 
 				partInputStream.close();
@@ -85,6 +88,8 @@ public class FileMergeTask extends Task {
 			done();
 
 		} catch (IOException e) {
+
+			e.printStackTrace();
 
 			// nothing to do
 			if (mergedFile != null) {

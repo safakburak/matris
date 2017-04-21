@@ -95,7 +95,7 @@ public class FileSendTask extends Task implements MessageSocketListener {
 
 			long partCount = size / MsgFilePart.CHUNK_SIZE;
 
-			if (partCount * MsgFilePart.CHUNK_SIZE < size) {
+			if (partCount * MsgFilePart.CHUNK_SIZE < size || size == 0) {
 
 				partCount++;
 			}
@@ -106,6 +106,11 @@ public class FileSendTask extends Task implements MessageSocketListener {
 
 				byte[] data = new byte[MsgFilePart.CHUNK_SIZE];
 				int chunkSize = inputStream.read(data);
+
+				if (chunkSize == -1) {
+
+					chunkSize = 0;
+				}
 
 				MsgFilePart filePart = new MsgFilePart();
 				filePart.setFileId(fileId);
@@ -126,6 +131,8 @@ public class FileSendTask extends Task implements MessageSocketListener {
 			}
 
 		} catch (IOException exception) {
+
+			exception.printStackTrace();
 
 			fail();
 

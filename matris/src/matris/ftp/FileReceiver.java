@@ -149,6 +149,8 @@ public class FileReceiver {
 
 		} catch (IOException e) {
 
+			e.printStackTrace();
+
 			if (partFile != null) {
 
 				partFile.delete();
