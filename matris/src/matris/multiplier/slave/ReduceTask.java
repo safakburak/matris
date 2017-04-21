@@ -161,13 +161,16 @@ public class ReduceTask extends Task {
 
 				int result = 0;
 
-				for (int i = 0; i < order; i++) {
+				for (int i = 0; i < q; i++) {
 
 					result += (m[i] * n[i]);
 				}
 
 				writer.write(p + " " + r + " " + result + "\n");
 				writer.flush();
+
+				mOrder = -1;
+				nOrder = -1;
 			}
 		}
 

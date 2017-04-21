@@ -61,7 +61,7 @@ public class Util {
 
 		while ((line = reader.readLine()) != null) {
 
-			if (line.startsWith("--") == false) {
+			if (line.startsWith("--") == false && line.isEmpty() == false) {
 
 				String[] tokens = line.split(":");
 				MessageAddress address = new MessageAddress(tokens[0], Integer.parseInt(tokens[1]));

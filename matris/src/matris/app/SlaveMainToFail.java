@@ -16,7 +16,7 @@ public class SlaveMainToFail {
 		new MultiplicationSlave("slave_to_fail_2", dir, 10018);
 		new MultiplicationSlave("slave_to_fail_3", dir, 10019);
 
-		Util.sleepSilent(6000);
+		Util.sleepSilent(5000);
 
 		System.exit(0);
 	}
