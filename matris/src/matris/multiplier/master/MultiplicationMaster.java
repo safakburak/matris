@@ -2,8 +2,6 @@ package matris.multiplier.master;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -56,26 +54,13 @@ public class MultiplicationMaster extends Coordinator {
 
 		if (inputDir.exists()) {
 
-			int taskId = 0;
-
 			for (File file : inputDir.listFiles()) {
 
 				if (file.isFile()) {
 
 					String taskName;
 
-					try {
-
-						taskName = InetAddress.getLocalHost().getHostAddress() + "_" + socket.getPort() + "_" + taskId;
-
-					} catch (UnknownHostException e) {
-
-						taskName = UUID.randomUUID().toString().hashCode() + "_" + socket.getPort() + "_" + taskId;
-					}
-
-					taskId++;
-
-					MultiplicationTask task = new MultiplicationTask(taskName.hashCode(), file, socket,
+					MultiplicationTask task = new MultiplicationTask(UUID.randomUUID().hashCode(), file, socket,
 							getAliveWorkers(), outputDir, fileReceiver, processDir);
 
 					multiplicationTasks.put(task.getTaskId(), task);
