@@ -58,8 +58,6 @@ public class MultiplicationMaster extends Coordinator {
 
 				if (file.isFile()) {
 
-					String taskName;
-
 					MultiplicationTask task = new MultiplicationTask(UUID.randomUUID().hashCode(), file, socket,
 							getAliveWorkers(), outputDir, fileReceiver, processDir);
 
