@@ -158,7 +158,7 @@ public class Coordinator {
 		return workerStates.get(worker);
 	}
 
-	protected List<MessageAddress> getWorkers() {
+	public List<MessageAddress> getWorkers() {
 
 		return new ArrayList<>(workerStates.keySet());
 	}

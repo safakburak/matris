@@ -23,7 +23,7 @@ public class CoordinatorTest {
 
 		JOptionPane.showMessageDialog(null, "Konsolda koordinatörün durumunu takip edin!");
 
-		Coordinator coordinator = new Coordinator(10000);
+		Coordinator coordinator = new Coordinator(1234);
 
 		Util.sleepSilent(1000);
 
@@ -32,7 +32,7 @@ public class CoordinatorTest {
 
 		JOptionPane.showMessageDialog(null, "Bütün workerları ayağa kaldırıyorum!");
 
-		for (MessageAddress address : coordinator.getAliveWorkers()) {
+		for (MessageAddress address : coordinator.getWorkers()) {
 
 			Worker worker = new Worker(address.getPort());
 
