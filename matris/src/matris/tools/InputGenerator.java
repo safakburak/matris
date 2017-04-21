@@ -17,16 +17,9 @@ public class InputGenerator {
 		}
 	}
 
-	public static void main(String[] args) throws IOException {
+	private static void generateInput(File dir, int p, int q, int r) throws IOException {
 
-		int p = 17;
-		int q = 7;
-		int r = 19;
-
-		File outputDir = new File("input");
-		outputDir.mkdirs();
-
-		File output = new File(outputDir.getPath() + "/" + "input_" + p + "_" + q + "_" + r + ".txt");
+		File output = new File(dir.getPath() + "/" + "input_" + p + "_" + q + "_" + r + ".txt");
 
 		if (output.exists()) {
 
@@ -47,5 +40,14 @@ public class InputGenerator {
 
 		writer.flush();
 		writer.close();
+	}
+
+	public static void main(String[] args) throws IOException {
+
+		File outputDir = new File("input");
+		outputDir.mkdirs();
+
+		generateInput(outputDir, 17, 7, 9);
+		generateInput(outputDir, 11, 11, 11);
 	}
 }
