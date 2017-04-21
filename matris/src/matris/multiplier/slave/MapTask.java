@@ -94,7 +94,7 @@ public class MapTask extends Task {
 
 		try {
 
-			mapDir = new File(rootDir.getPath() + "/map_" + taskId + "_" + partNo);
+			mapDir = new File(rootDir.getPath() + "/map_" + owner + "_" + taskId + "_" + partNo);
 			mapDir.mkdirs();
 
 			workers = Util.parseHostsFile(hostsFile);

@@ -53,6 +53,6 @@ public class MessageAddress {
 	@Override
 	public String toString() {
 
-		return host + ":" + port;
+		return host + "_" + port;
 	}
 }

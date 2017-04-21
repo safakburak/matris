@@ -43,7 +43,7 @@ public class ReduceTask extends Task {
 		this.owner = owner;
 		this.reductionNo = reductionNo;
 
-		reduceDir = new File(rootDir.getPath() + "/reduce_" + taskId + "_" + reductionNo);
+		reduceDir = new File(rootDir.getPath() + "/reduce_" + owner + "_" + taskId + "_" + reductionNo);
 		reduceDir.mkdirs();
 	}
 
