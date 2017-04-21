@@ -118,7 +118,12 @@ public class MultiplicationTask extends Task implements MessageSocketListener {
 		r = Integer.parseInt(reader.readLine());
 
 		int rowCount = p * q + q * r;
-		int partSize = (int) (rowCount / workers.size() + 0.5);
+		int partSize = rowCount / workers.size();
+
+		while (partSize * workers.size() < rowCount) {
+
+			partSize++;
+		}
 
 		partDir = new File(rootDir.getPath() + "/parts");
 		partDir.mkdirs();

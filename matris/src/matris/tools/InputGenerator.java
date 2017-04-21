@@ -19,10 +19,14 @@ public class InputGenerator {
 
 	public static void main(String[] args) throws IOException {
 
+		int p = 17;
+		int q = 7;
+		int r = 19;
+
 		File outputDir = new File("input");
 		outputDir.mkdirs();
 
-		File output = new File(outputDir.getPath() + "/" + "input.txt");
+		File output = new File(outputDir.getPath() + "/" + "input_" + p + "_" + q + "_" + r + ".txt");
 
 		if (output.exists()) {
 
@@ -33,10 +37,6 @@ public class InputGenerator {
 		output.createNewFile();
 
 		FileWriter writer = new FileWriter(output);
-
-		int p = 20;
-		int q = 20;
-		int r = 20;
 
 		writer.write(p + "\n");
 		writer.write(q + "\n");
