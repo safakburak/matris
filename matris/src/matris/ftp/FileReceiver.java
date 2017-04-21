@@ -26,6 +26,8 @@ public class FileReceiver {
 
 	private ConcurrentHashMap<Integer, File> receivedFiles = new ConcurrentHashMap<>();
 
+	private ConcurrentHashMap<File, MessageAddress> receivedFileSources = new ConcurrentHashMap<>();
+
 	public FileReceiver(MessageSocket socket, File receiveFolder) {
 
 		this.socket = socket;
@@ -58,10 +60,22 @@ public class FileReceiver {
 		return receivedFiles.containsKey(fileId);
 	}
 
+	public void removeFilesFromSource(MessageAddress source) {
+
+		for (Entry<File, MessageAddress> e : receivedFileSources.entrySet()) {
+
+			if (e.getValue().equals(source)) {
+
+				removeFile(e.getKey());
+			}
+		}
+	}
+
 	public void removeFile(int fileId) {
 
 		File file = receivedFiles.remove(fileId);
 		receivedPartsCounts.remove(fileId);
+		receivedFileSources.remove(file);
 
 		Util.remove(file);
 	}
@@ -160,6 +174,8 @@ public class FileReceiver {
 			fileReceived.setReliable(true);
 
 			receivedFiles.put(fileId, mergeTask.getMergedFile());
+
+			receivedFileSources.put(mergeTask.getMergedFile(), filePart.getSource());
 
 			socket.send(fileReceived);
 		}

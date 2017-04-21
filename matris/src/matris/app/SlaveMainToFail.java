@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 
 import matris.multiplier.slave.MultiplicationSlave;
+import matris.tools.Util;
 
 public class SlaveMainToFail {
 
@@ -14,5 +15,9 @@ public class SlaveMainToFail {
 		new MultiplicationSlave("slave_to_fail_1", dir, 10017);
 		new MultiplicationSlave("slave_to_fail_2", dir, 10018);
 		new MultiplicationSlave("slave_to_fail_3", dir, 10019);
+
+		Util.sleepSilent(6000);
+
+		System.exit(0);
 	}
 }

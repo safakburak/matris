@@ -101,11 +101,14 @@ public class MultiplicationSlave extends Worker implements MessageSocketListener
 				}
 			}
 
+			fileReceiver.removeFilesFromSource(done.getSource());
+
 		} else if (message instanceof MsgWorkerReplacement) {
 
 			MsgWorkerReplacement workerReplacement = (MsgWorkerReplacement) message;
 
 			handleWorkerReplacement(workerReplacement);
+
 		}
 	}
 

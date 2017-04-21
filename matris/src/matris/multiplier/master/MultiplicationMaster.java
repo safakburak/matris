@@ -126,11 +126,6 @@ public class MultiplicationMaster extends Coordinator {
 
 			MessageAddress candidate = workers.get((i + offset) % workers.size());
 
-			if (candidate == deadWorker) {
-
-				break;
-			}
-
 			if (isWorkerUp(candidate) == true) {
 
 				replacement = candidate;
