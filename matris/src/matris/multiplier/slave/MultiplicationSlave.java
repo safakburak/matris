@@ -47,7 +47,6 @@ public class MultiplicationSlave extends Worker implements MessageSocketListener
 		Util.remove(rootDir);
 
 		rootDir.mkdirs();
-
 		receiveDir = new File(rootDir.getPath() + "/received");
 		receiveDir.mkdirs();
 
@@ -80,6 +79,25 @@ public class MultiplicationSlave extends Worker implements MessageSocketListener
 					mapTasks.remove(e.getKey());
 
 					Util.remove(e.getValue().getMapDir());
+				}
+			}
+
+			for (MessageAddress source : workerReplacements.keySet()) {
+
+				boolean canRemove = true;
+
+				for (MapTask t : mapTasks.values()) {
+
+					if (t.getOwner().equals(source)) {
+
+						canRemove = false;
+						break;
+					}
+				}
+
+				if (canRemove) {
+
+					workerReplacements.remove(source);
 				}
 			}
 
